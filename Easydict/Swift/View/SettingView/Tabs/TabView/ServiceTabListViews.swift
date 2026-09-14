@@ -7,7 +7,6 @@
 //
 
 import AppKit
-import Defaults
 import SFSafeSymbols
 import SwiftUI
 
@@ -71,61 +70,14 @@ private struct ServiceItemView: View {
         .listRowInsets(.init())
         .padding(.vertical, 8)
         .contentShape(Rectangle())
-        .alert(
-            "service.claude_code.enable_risk_alert.title",
-            isPresented: $showClaudeCodeRiskAlert
-        ) {
-            Button("cancel", role: .cancel) {
-                showClaudeCodeRiskAlert = false
-            }
-            Button("ok") {
-                showClaudeCodeRiskAlert = false
-                viewModel.setServiceEnabled(true, for: item)
-            }
-        } message: {
-            Text("service.claude_code.enable_risk_alert.message")
-        }
-        .alert(
-            "service.codex_cli.enable_risk_alert.title",
-            isPresented: $showCodexCLIRiskAlert
-        ) {
-            Button("cancel", role: .cancel) {
-                showCodexCLIRiskAlert = false
-            }
-            Button("ok") {
-                showCodexCLIRiskAlert = false
-                viewModel.setServiceEnabled(true, for: item)
-            }
-        } message: {
-            Text(codexAccessMode.enableMessage)
-        }
     }
 
     // MARK: Private
 
-    @State private var showClaudeCodeRiskAlert = false
-    @State private var showCodexCLIRiskAlert = false
-    @State private var codexAccessMode: CodexAccessMode = .managed
-
     @EnvironmentObject private var viewModel: ServiceTabViewModel
 
-    /// Toggles the service on or off. Enabling Claude Code or Codex CLI first
-    /// prompts a risk confirmation; other services enable directly.
     private func toggleEnabled() {
-        guard !item.enabled else {
-            viewModel.setServiceEnabled(false, for: item)
-            return
-        }
-
-        if item.type == .claudeCode {
-            showClaudeCodeRiskAlert = true
-        } else if item.type == .codexCLI {
-            guard let metadata = QueryServiceFactory.shared.metadata(withTypeId: item.id) else { return }
-            codexAccessMode = Defaults[CodexAccessMode.key(uuid: metadata.uuid)]
-            showCodexCLIRiskAlert = true
-        } else {
-            viewModel.setServiceEnabled(true, for: item)
-        }
+        viewModel.setServiceEnabled(!item.enabled, for: item)
     }
 }
 

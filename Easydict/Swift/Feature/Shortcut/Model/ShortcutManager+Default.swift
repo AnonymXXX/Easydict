@@ -22,7 +22,6 @@ extension ShortcutManager {
         Defaults[.inputShortcut] = KeyCombo(key: .a, cocoaModifiers: .option)
         Defaults[.snipShortcut] = KeyCombo(key: .s, cocoaModifiers: .option)
         Defaults[.selectionShortcut] = KeyCombo(key: .d, cocoaModifiers: .option)
-        Defaults[.showMiniWindowShortcut] = KeyCombo(key: .f, cocoaModifiers: .option)
         Defaults[.silentScreenshotOCRShortcut] = KeyCombo(
             key: .s, cocoaModifiers: [.option, .shift]
         )
@@ -41,9 +40,6 @@ extension ShortcutManager {
         Defaults[.hideShortcut] = KeyCombo(key: .y, cocoaModifiers: .command)
         Defaults[.increaseFontSize] = KeyCombo(key: .keypadPlus, cocoaModifiers: .command)
         Defaults[.decreaseFontSize] = KeyCombo(key: .keypadMinus, cocoaModifiers: .command)
-        Defaults[.googleShortcut] = KeyCombo(key: .return, cocoaModifiers: .command)
-        Defaults[.eudicShortcut] = KeyCombo(key: .return, cocoaModifiers: [.command, .shift])
-        Defaults[.appleDictionaryShortcut] = KeyCombo(key: .d, cocoaModifiers: [.command, .shift])
     }
 }
 

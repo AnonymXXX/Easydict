@@ -63,18 +63,6 @@ struct AdvancedTab: View {
                     )
                 }
 
-                // Require macOS 15+
-                if #available(macOS 15.0, *) {
-                    Toggle(isOn: $enableLocalAppleTranslation) {
-                        AdvancedTabItemView(
-                            color: .orange,
-                            icon: .appleLogo,
-                            labelText: "setting.advance.apple_offline_translation",
-                            subtitleText: "setting.advance.apple_offline_translation_desc"
-                        )
-                    }
-                }
-
                 LabeledContent {
                     TextField(
                         text: $minClassicalChineseTextDetectLength,
@@ -398,38 +386,6 @@ struct AdvancedTab: View {
             } header: {
                 Text("setting.advance.window_management.header")
             }
-
-            // HTTP server
-            Section {
-                Toggle(isOn: $enableHTTPServer) {
-                    AdvancedTabItemView(
-                        color: getHttpIconColor(),
-                        icon: .network,
-                        labelText: "setting.advance.enable_http_server"
-                    )
-                }
-
-                LabeledContent {
-                    TextField(text: $httpPort, prompt: Text(verbatim: "8080")) {
-                        EmptyView()
-                    }
-                    .frame(width: 100)
-                    .fixedSize(horizontal: true, vertical: false)
-                    // Add onChange modifier to filter input
-                    .onChange(of: httpPort) { newValue in
-                        httpPort = newValue.filter { $0.isNumber }
-                    }
-                } label: {
-                    AdvancedTabItemView(
-                        color: getHttpIconColor(),
-                        icon: .externaldriveConnectedToLineBelow,
-                        labelText: "setting.advance.http_port",
-                        subtitleText: "setting.advance.http_port_desc"
-                    )
-                }
-            } header: {
-                Text("setting.advance.header.http_server")
-            }
         }
         .formStyle(.grouped)
     }
@@ -443,7 +399,6 @@ struct AdvancedTab: View {
     @Default(.disableTipsView) private var disableTipsView
     @Default(.enableYoudaoOCR) private var enableYoudaoOCR
     @Default(.enableCompatibilityReplace) private var enableCompatibilityReplace
-    @Default(.enableAppleOfflineTranslation) private var enableLocalAppleTranslation
     @Default(.minClassicalChineseTextDetectLength) private var minClassicalChineseTextDetectLength
     @Default(.enableOCRTextNormalization) private var enableOCRTextNormalization
     @Default(.showOCRMenuItems) private var showOCRMenuItems
@@ -472,15 +427,7 @@ struct AdvancedTab: View {
     @Default(.pinWindowWhenDisplayed) private var pinWindowWhenDisplayed
     @Default(.hideMainWindow) private var hideMainWindow
 
-    @Default(.enableHTTPServer) private var enableHTTPServer
-    @Default(.httpPort) private var httpPort
-
     @Default(.maxWindowHeightPercentage) private var maxWindowHeightPercentageValue
-
-    /// Returns Color.green if `enableHTTPServer` is true, returns Color.red otherwise.
-    private func getHttpIconColor() -> Color {
-        enableHTTPServer ? .green : .red
-    }
 }
 
 #Preview {

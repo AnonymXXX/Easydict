@@ -16,43 +16,12 @@ import SwiftUI
 struct GeneralTab: View {
     // MARK: Internal
 
-    class CheckUpdaterViewModel: ObservableObject {
-        // MARK: Lifecycle
-
-        init() {
-            updater
-                .publisher(for: \.automaticallyChecksForUpdates)
-                .assign(to: &$autoChecksForUpdates)
-        }
-
-        // MARK: Internal
-
-        @Published var autoChecksForUpdates = true {
-            didSet {
-                updater.automaticallyChecksForUpdates = autoChecksForUpdates
-            }
-        }
-
-        // MARK: Private
-
-        private let updater = MyConfiguration.shared.updater
-    }
-
     @Environment(\.colorScheme) var colorScheme
 
     var body: some View {
         Form {
             Section {
                 FirstAndSecondLanguageSettingView()
-                Picker(
-                    "setting.general.language.language_detect_optimize",
-                    selection: $languageDetectOptimize
-                ) {
-                    ForEach(LanguageDetectOptimize.allCases, id: \.rawValue) { option in
-                        Text(option.localizedStringResource)
-                            .tag(option)
-                    }
-                }
             } header: {
                 Text("setting.general.query_language.header")
             }
@@ -98,9 +67,6 @@ struct GeneralTab: View {
             }
 
             Section {
-                Toggle("show_google_quick_link", isOn: $showGoogleQuickLink)
-                Toggle("show_eudic_quick_link", isOn: $showEudicQuickLink)
-                Toggle("show_apple_dictionary_quick_link", isOn: $showAppleDictionaryQuickLink)
                 Toggle("show_setting_quick_link", isOn: $showQuickActionButton)
             } header: {
                 Text("setting.general.quick_link.header")
@@ -134,45 +100,6 @@ struct GeneralTab: View {
                         Text(option.title)
                             .tag(option)
                     }
-                }
-
-                // Check for updates
-                HStack {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("check_for_updates")
-                        Text("lastest_version \(lastestVersion ?? version)")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
-                    Spacer()
-                    Button("check_now") {
-                        MyConfiguration.shared.updater.checkForUpdates()
-                    }
-                }
-
-                Toggle(isOn: $checkUpdaterViewModel.autoChecksForUpdates) {
-                    Text("auto_check_update ")
-                }
-
-                HStack {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("setting.general.startup_and_update.include_beta")
-                        Text("setting.general.startup_and_update.include_beta.description")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
-                    Spacer()
-                    Toggle(
-                        isOn: $includeBetaUpdates.didSet(execute: { state in
-                            logSettings(["include_beta_updates": state])
-                            if state {
-                                MyConfiguration.shared.updater.checkForUpdates()
-                            }
-                        })
-                    ) {
-                        EmptyView()
-                    }
-                    .labelsHidden()
                 }
 
                 LaunchAtLogin.Toggle {
@@ -242,9 +169,6 @@ struct GeneralTab: View {
             }
         }
         .formStyle(.grouped)
-        .task {
-            lastestVersion = await fetchRepoLatestVersion(EZGithubRepoEasydict)
-        }
         .alert("hide_menu_bar_icon", isPresented: $showRefuseAlert) {
             Button("ok") {
                 showRefuseAlert = false
@@ -273,13 +197,6 @@ struct GeneralTab: View {
     @State private var showRefuseAlert = false
     @State private var showHideMenuBarIconAlert = false
 
-    @StateObject private var checkUpdaterViewModel = CheckUpdaterViewModel()
-
-    @State private var lastestVersion: String?
-
-    // Query language
-    @Default(.languageDetectOptimize) private var languageDetectOptimize
-
     // Input textfield
     @Default(.clearQueryWhenInputTranslate) private var clearInput
     @Default(.keepPrevResultWhenSelectTranslateTextIsEmpty) private var keepPrevResultWhenEmpty
@@ -299,9 +216,6 @@ struct GeneralTab: View {
     @Default(.autoCopyFirstTranslatedText) private var autoCopyFirstTranslatedText
 
     // Quick link
-    @Default(.showGoogleQuickLink) private var showGoogleQuickLink
-    @Default(.showEudicQuickLink) private var showEudicQuickLink
-    @Default(.showAppleDictionaryQuickLink) private var showAppleDictionaryQuickLink
     @Default(.showQuickActionButton) private var showQuickActionButton
 
     @Default(.appearanceType) private var appearanceType
@@ -309,12 +223,6 @@ struct GeneralTab: View {
     @Default(.selectedMenuBarIcon) private var selectedMenuBarIcon
     @Default(.fontSizeOptionIndex) private var fontSizeOptionIndex
     @Default(.enableMarkdownRendering) private var enableMarkdownRendering
-
-    @Default(.includeBetaUpdates) private var includeBetaUpdates
-
-    private var version: String {
-        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
-    }
 
     private var shortcutsHaveSetuped: Bool {
         Defaults[.inputShortcut] != nil || Defaults[.selectionShortcut] != nil

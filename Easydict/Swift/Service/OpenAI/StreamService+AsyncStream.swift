@@ -7,21 +7,10 @@
 //
 
 import Foundation
-import OpenAI
 
 // MARK: - Stream Translate
 
 extension StreamService {
-    func chatStreamTranslate(
-        _ text: String,
-        from: Language,
-        to: Language
-    )
-        -> AsyncThrowingStream<ChatStreamResult, Error> {
-        let contentStream = contentStreamTranslate(text, from: from, to: to)
-        return contentStreamToChatStream(contentStream)
-    }
-
     /// Stream translate text, return EZQueryResult stream.
     /// - Note: This func does not throttle result.
     func streamTranslate(
@@ -135,30 +124,6 @@ extension StreamService {
         }
     }
 
-    /// Convert AsyncThrowingStream<String, Error> to AsyncThrowingStream<ChatStreamResult, Error>
-    func contentStreamToChatStream(
-        _ contentStream: AsyncThrowingStream<String, Error>
-    )
-        -> AsyncThrowingStream<ChatStreamResult, Error> {
-        AsyncThrowingStream<ChatStreamResult, Error> { continuation in
-            let task = Task {
-                do {
-                    for try await content in contentStream {
-                        let chatStreamResult = try ChatStreamResult.create(
-                            content: content,
-                            model: model
-                        )
-                        continuation.yield(chatStreamResult)
-                    }
-                    continuation.finish()
-                } catch {
-                    continuation.finish(throwing: error)
-                }
-            }
-            continuation.onTermination = { _ in task.cancel() }
-        }
-    }
-
     /// Convert AsyncThrowingStream<EZQueryResult> to AsyncThrowingStream<String, Error>
     func queryResultStreamToTextStream(
         _ queryResultStream: AsyncThrowingStream<QueryResult, Error>
@@ -183,55 +148,4 @@ extension StreamService {
             continuation.onTermination = { _ in task.cancel() }
         }
     }
-}
-
-extension ChatStreamResult {
-    static func create(content: String, model: String) throws -> ChatStreamResult {
-        let payload = OpenAIChatStreamChunkPayload(content: content, model: model)
-        let data = try JSONEncoder().encode(payload)
-        return try JSONDecoder().decode(ChatStreamResult.self, from: data)
-    }
-
-    var content: String? {
-        choices.first?.delta.content
-    }
-}
-
-// MARK: - OpenAIChatStreamChunkPayload
-
-/// Encodes a text-only chunk that can be decoded by the upstream SDK result type.
-private struct OpenAIChatStreamChunkPayload: Encodable {
-    // MARK: Lifecycle
-
-    init(content: String, model: String) {
-        self.id = "chatcmpl-\(UUID().uuidString)"
-        self.created = TimeInterval(Int(Date().timeIntervalSince1970))
-        self.model = model
-        self.choices = [.init(content: content)]
-    }
-
-    // MARK: Internal
-
-    struct Choice: Encodable {
-        // MARK: Lifecycle
-
-        init(content: String) {
-            self.delta = .init(content: content)
-        }
-
-        // MARK: Internal
-
-        let index = 0
-        let delta: Delta
-    }
-
-    struct Delta: Encodable {
-        let content: String
-    }
-
-    let id: String
-    let object = "chat.completion.chunk"
-    let created: TimeInterval
-    let model: String
-    let choices: [Choice]
 }

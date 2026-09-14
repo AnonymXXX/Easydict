@@ -36,9 +36,28 @@ extension StreamService {
         interval: TimeInterval = 0.3,
         completion: @escaping (QueryResult) -> ()
     ) async throws {
-        for try await text in textStream._throttle(for: .seconds(interval)) {
+        var lastDelivery = Date.distantPast
+        var pendingText: String?
+
+        for try await text in textStream {
+            pendingText = text
+            guard Date().timeIntervalSince(lastDelivery) >= interval else { continue }
+
             updateResultText(
                 text,
+                queryType: queryType,
+                error: error,
+                targetResult: targetResult,
+                targetGeneration: targetGeneration,
+                completion: completion
+            )
+            pendingText = nil
+            lastDelivery = Date()
+        }
+
+        if let pendingText {
+            updateResultText(
+                pendingText,
                 queryType: queryType,
                 error: error,
                 targetResult: targetResult,

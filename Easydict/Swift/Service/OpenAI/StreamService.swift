@@ -10,7 +10,6 @@ import Alamofire
 import Combine
 import Defaults
 import Foundation
-import OpenAI
 import SwiftUI
 
 // MARK: - StreamService
@@ -208,13 +207,6 @@ public class StreamService: QueryService {
     var cancellables: Set<AnyCancellable> = []
 
     var hideThinkTagContent: Bool = true
-
-    /// The optional OpenAI-compatible reasoning mode for stream services.
-    /// Subclasses can override this when the selected provider supports the parameter.
-    @nonobjc
-    var reasoningEffort: ChatQuery.ReasoningEffort? {
-        nil
-    }
 
     /// Whether requests currently use streaming transport over the network.
     ///

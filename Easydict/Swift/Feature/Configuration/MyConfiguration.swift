@@ -127,7 +127,6 @@ class MyConfiguration: NSObject {
     @ShortcutWrapper(.appleDictionaryShortcut) var appleDictShortcutString: String
     @ShortcutWrapper(.eudicShortcut) var eudicDictShortcutString: String
 
-    let updater = GlobalContext.shared.updaterController.updater
     let fontSizes: [CGFloat] = [1, 1.1, 1.2, 1.3, 1.4]
     var disabledAutoSelect: Bool = false
     var isRecordingSelectTextShortcutKey: Bool = false
@@ -136,16 +135,6 @@ class MyConfiguration: NSObject {
     var fontSizeRatio: CGFloat {
         let safeIndex = max(0, min(Int(fontSizeIndex), fontSizes.count - 1))
         return fontSizes[safeIndex]
-    }
-
-    var automaticallyChecksForUpdates: Bool {
-        get {
-            updater.automaticallyChecksForUpdates
-        }
-        set {
-            updater.automaticallyChecksForUpdates = newValue
-            logSettings(["automatically_checks_for_updates": newValue])
-        }
     }
 
     var defaultTTSServiceType: ServiceType {
@@ -352,20 +341,6 @@ class MyConfiguration: NSObject {
             }
             .store(in: &cancellables)
 
-        Defaults.publisher(.allowCrashLog, options: [.initial])
-            .removeDuplicates()
-            .sink { [weak self] _ in
-                self?.didSetAllowCrashLog()
-            }
-            .store(in: &cancellables)
-
-        Defaults.publisher(.allowAnalytics, options: [])
-            .removeDuplicates()
-            .sink { [weak self] _ in
-                self?.didSetAllowAnalytics()
-            }
-            .store(in: &cancellables)
-
         Defaults.publisher(.clearQueryWhenInputTranslate, options: [])
             .removeDuplicates()
             .sink { [weak self] _ in
@@ -391,9 +366,6 @@ class MyConfiguration: NSObject {
         Defaults.publisher(
             keys: [
                 .pinShortcut,
-                .appleDictionaryShortcut,
-                .googleShortcut,
-                .eudicShortcut,
             ],
             options: []
         )
@@ -403,15 +375,6 @@ class MyConfiguration: NSObject {
         }
         .store(in: &cancellables)
 
-        Defaults.publisher(.enableHTTPServer)
-            .removeDuplicates()
-            .sink { change in
-                let isOn = change.newValue
-                Task {
-                    await VaporServer.shared.startServer(isOn: isOn)
-                }
-            }
-            .store(in: &cancellables)
     }
 }
 
@@ -447,10 +410,6 @@ extension MyConfiguration {
         EZWindowManager.shared().updatePopButtonQueryAction()
 
         logSettings(["click_query": clickQuery])
-    }
-
-    fileprivate func didSetAutomaticallyChecksForUpdates() {
-        logSettings(["automatically_checks_for_updates": automaticallyChecksForUpdates])
     }
 
     fileprivate func didSetHideMainWindow() {
@@ -539,15 +498,6 @@ extension MyConfiguration {
 
     fileprivate func didSetShortcutSelectTranslateWindowType() {
         logSettings(["show_shortcut_window_type": shortcutSelectTranslateWindowType])
-    }
-
-    fileprivate func didSetAllowCrashLog() {
-        AnalyticsService.setCrashEnabled(allowCrashLog)
-        logSettings(["allow_crash_log": allowCrashLog])
-    }
-
-    fileprivate func didSetAllowAnalytics() {
-        logSettings(["allow_analytics": allowAnalytics])
     }
 
     fileprivate func didSetClearInput() {

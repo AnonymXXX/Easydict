@@ -18,6 +18,12 @@
 <a href="./README_ZH.md">中文</a> &nbsp;&nbsp;|&nbsp;&nbsp; <a href="./README.md">English</a>
 </div>
 
+> [!IMPORTANT]
+> 这是 [Easydict](https://github.com/tisfeng/Easydict) 的个人轻量 fork。当前编译目标只保留
+> 输入翻译、划词翻译、Apple Vision 截图 OCR，以及有道和 DeepSeek 两个查询服务；已移除
+> Apple 翻译、其他查询服务、HTTP Server、自动更新、分析和崩溃上报依赖。Release 仅构建
+> Apple Silicon (`arm64`)。下方其余内容保留自上游，作为原项目功能和使用方式参考。
+
 ## Easydict
 
 `Easydict` 是一个简洁易用的词典翻译 macOS App，能够轻松优雅地查找单词或翻译文本。

@@ -118,7 +118,24 @@ extension YoudaoService {
 
         // Need additional translation
         ocrSuccess(ocrResult, true)
-        let queryResult = try await translate(ocrResult.mergedText, from: from, to: to, enablePrehandle: true)
+        var sourceLanguage = from
+        if sourceLanguage == .auto {
+            sourceLanguage = try await DetectManager()
+                .detectText(ocrResult.mergedText)
+                .detectedLanguage
+        }
+
+        let (prehandled, prehandledResult) = try await prehandleQueryText(
+            ocrResult.mergedText,
+            from: sourceLanguage,
+            to: to
+        )
+        let queryResult: QueryResult
+        if prehandled {
+            queryResult = prehandledResult
+        } else {
+            queryResult = try await translate(ocrResult.mergedText, from: sourceLanguage, to: to)
+        }
         return (ocrResult, queryResult)
     }
 }

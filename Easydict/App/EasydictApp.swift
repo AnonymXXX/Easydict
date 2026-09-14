@@ -8,7 +8,6 @@
 
 import Defaults
 import SettingsAccess
-import Sparkle
 import SwiftUI
 
 // MARK: - EasydictCmpatibilityEntry

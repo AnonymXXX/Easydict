@@ -59,21 +59,24 @@ extension ShortcutAction {
         .inputTranslate,
         .snipTranslate,
         .selectTranslate,
-        .toggleAutoSelectText,
-        .showMiniWindow,
-        .pasteboardTranslate,
-        .polishAndReplace,
-        .translateAndReplace,
         .silentScreenshotOCR,
-        .screenshotOCR,
-        .pasteboardOCR,
-        .showOCRWindow,
     ]
 
     /// All app-specific shortcut actions (only active when app is focused)
-    static var appActions: [ShortcutAction] {
-        allCases.filter { !globalActions.contains($0) }
-    }
+    static let appActions: [ShortcutAction] = [
+        .clearInput,
+        .clearAll,
+        .copy,
+        .copyFirstResult,
+        .focus,
+        .play,
+        .retry,
+        .toggle,
+        .pin,
+        .hide,
+        .increaseFontSize,
+        .decreaseFontSize,
+    ]
 
     /// Whether this action is a global shortcut (system-wide hotkey)
     var isGlobal: Bool {
@@ -166,18 +169,6 @@ extension ShortcutAction {
                 icon: .docOnClipboard,
                 defaultsKey: .pasteboardTranslateShortcut,
                 action: { windowManager.pasteboardTranslate(.fixed) }
-            ),
-            .polishAndReplace: .init(
-                titleKey: "menu_polish_and_replace",
-                icon: .wandAndStars,
-                defaultsKey: .polishAndReplaceShortcut,
-                action: { await ActionManager.shared.polishAndReplace() }
-            ),
-            .translateAndReplace: .init(
-                titleKey: "menu_translate_and_replace",
-                icon: .arrowLeftArrowRightSquare,
-                defaultsKey: .translateAndReplaceShortcut,
-                action: { await ActionManager.shared.translateAndReplace() }
             ),
             .showMiniWindow: .init(
                 titleKey: "menu_show_mini_window",

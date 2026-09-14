@@ -28,12 +28,12 @@ static CGFloat const EZAudioButtonBottomMargin_4 = 4;
 static CGFloat const EZAudioButtonRightPadding_1 = 1;
 
 
-static NSString *const EZBundleId = @"com.izual.Easydict";
-static NSString *const EZDebugBundleId = @"com.izual.Easydict-debug";
+static NSString *const EZBundleId = @"com.anonymxxx.EasydictLite";
+static NSString *const EZDebugBundleId = @"com.anonymxxx.EasydictLite-debug";
 
-/// tisfeng/Easydict
-static NSString *const EZGithubRepoEasydict = @"tisfeng/Easydict";
-static NSString *const EZGithubRepoEasydictURL = @"https://github.com/tisfeng/Easydict";
+/// AnonymXXX/Easydict
+static NSString *const EZGithubRepoEasydict = @"AnonymXXX/Easydict";
+static NSString *const EZGithubRepoEasydictURL = @"https://github.com/AnonymXXX/Easydict";
 
 static NSString *const EZUserAgent = @"Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36";
 

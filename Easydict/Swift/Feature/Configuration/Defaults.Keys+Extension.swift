@@ -81,10 +81,10 @@ extension Defaults.Keys {
         "EZConfiguration_kPreferYoudaoTTSForEnglishWordKey",
         default: true
     )
-    static let showGoogleQuickLink = Key<Bool>("EZConfiguration_kShowGoogleLinkKey", default: true)
-    static let showEudicQuickLink = Key<Bool>("EZConfiguration_kShowEudicLinkKey", default: true)
+    static let showGoogleQuickLink = Key<Bool>("EZConfiguration_kShowGoogleLinkKey", default: false)
+    static let showEudicQuickLink = Key<Bool>("EZConfiguration_kShowEudicLinkKey", default: false)
     static let showAppleDictionaryQuickLink = Key<Bool>(
-        "EZConfiguration_kShowAppleDictionaryLinkKey", default: true
+        "EZConfiguration_kShowAppleDictionaryLinkKey", default: false
     )
     static let showQuickActionButton = Key<Bool>(
         "EZConfiguration_kShowSettingQuickLink", default: true
@@ -337,54 +337,6 @@ class ShortcutWrapper<T: KeyCombo> {
         }
         return (keyCombo?.keyEquivalentModifierMaskString ?? "") + (keyCombo?.keyEquivalent ?? "")
     }
-}
-
-private let EZDeepLTranslationAPIKey = "EZDeepLTranslationAPIKey"
-
-// Service Configuration
-extension Defaults.Keys {
-    // DeepL
-    static let deepLAuth = Key<String>(EZDeepLAuthKey, default: "")
-    static let deepLTranslation = Key<DeepLAPIUsagePriority>(
-        EZDeepLTranslationAPIKey,
-        default: DeepLAPIUsagePriority.webFirst
-    )
-    static let deepLTranslateEndPointKey = Key<String>(EZDeepLTranslateEndPointKey, default: "")
-
-    // Bing
-    static let bingCookieKey = Key<String>(EZBingCookieKey, default: "")
-
-    // niu
-    static let niuTransAPIKey = Key<String>(EZNiuTransAPIKey, default: "")
-
-    // Caiyun
-    static let caiyunToken = Key<String>(EZCaiyunToken, default: "")
-
-    // tencent
-    static let tencentSecretId = Key<String>(EZTencentSecretId, default: "")
-    static let tencentSecretKey = Key<String>(EZTencentSecretKey, default: "")
-
-    // Ali
-    static let aliAccessKeyId = Key<String>(EZAliAccessKeyId, default: "")
-    static let aliAccessKeySecret = Key<String>(EZAliAccessKeySecret, default: "")
-    static let aliServiceApiTypeKey = Key<ServiceAPIType>(
-        EZAliServiceApiTypeKey, default: .secretKey
-    )
-
-    // baidu
-    static let baiduAppId = Key<String>(EZBaiduAppId, default: "")
-    static let baiduSecretKey = Key<String>(EZBaiduSecretKey, default: "")
-    static let baiduServiceApiTypeKey = Key<ServiceAPIType>(
-        EZBaiduServiceApiTypeKey, default: .secretKey
-    )
-
-    // Volcano
-    static let volcanoAccessKeyID = Key<String>(EZVolcanoAccessKeyID, default: "")
-    static let volcanoSecretAccessKey = Key<String>(EZVolcanoSecretAccessKey, default: "")
-
-    // Doubao
-    static let doubaoAPIKey = Key<String>(EZDoubaoAPIKey, default: "")
-    static let doubaoModel = Key<String>(EZDoubaoModelKey, default: DoubaoService.defaultModelIdentifier)
 }
 
 /// shortcut

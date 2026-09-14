@@ -18,6 +18,13 @@
 <a href="./README_ZH.md">中文</a> &nbsp;&nbsp;|&nbsp;&nbsp; <a href="./README.md">English</a>
 </div>
 
+> [!IMPORTANT]
+> This is a personal lightweight fork of [Easydict](https://github.com/tisfeng/Easydict). The app
+> target retains input translation, selection translation, Apple Vision screenshot OCR, and only
+> the Youdao and DeepSeek query services. Apple Translate, other query services, the HTTP server,
+> automatic updates, analytics, and crash-reporting dependencies are removed. Release builds target
+> Apple Silicon (`arm64`) only. The remaining upstream documentation is preserved for reference.
+
 ## Easydict
 
 `Easydict` is a concise and easy-to-use translation dictionary macOS App that allows you to easily and elegantly look up words or translate text.
