@@ -13,11 +13,7 @@ import SwiftUI
 enum SettingTab: Int {
     case general
     case service
-    case disabled
-    case advanced
     case shortcut
-    case favorites
-    case about
 }
 
 // MARK: - SettingView
@@ -35,25 +31,9 @@ struct SettingView: View {
                 .tabItem { Label("service", systemImage: "briefcase") }
                 .tag(SettingTab.service)
 
-            FavoritesTab()
-                .tabItem { Label("favorites.tab", systemImage: "star") }
-                .tag(SettingTab.favorites)
-
-            DisabledAppTab()
-                .tabItem { Label("disabled_app_list", systemImage: "nosign") }
-                .tag(SettingTab.disabled)
-
             ShortcutTab()
                 .tabItem { Label("shortcut", systemImage: "command.square") }
                 .tag(SettingTab.shortcut)
-
-            AdvancedTab()
-                .tabItem { Label("advanced", systemImage: "gearshape.2") }
-                .tag(SettingTab.advanced)
-
-            AboutTab()
-                .tabItem { Label("setting.about", systemImage: "info.bubble") }
-                .tag(SettingTab.about)
         }
         .background(
             WindowAccessor(window: $window.didSet(execute: { _ in
@@ -73,19 +53,7 @@ struct SettingView: View {
         window.standardWindowButton(.zoomButton)?.isEnabled = false
 
         // Keep the settings page Windows all the same width to avoid strange animations.
-        let maxWidth: Double = 900
-        let height: Double = switch selection {
-        case .disabled:
-            500
-        case .about:
-            300
-        case .favorites:
-            640
-        default:
-            maxWidth * 0.8
-        }
-
-        let newSize = CGSize(width: maxWidth, height: height)
+        let newSize = CGSize(width: 820, height: 560)
 
         let originalFrame = window.frame
         let newY = originalFrame.origin.y + originalFrame.size.height - newSize.height

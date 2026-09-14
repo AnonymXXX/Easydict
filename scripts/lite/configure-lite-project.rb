@@ -47,9 +47,14 @@ REMOVED_APP_SOURCE_FILES = %w[
   Easydict/Swift/Service/OpenAI/BaseOpenAIService.swift
   Easydict/Swift/Service/OpenAI/OpenAIService.swift
   Easydict/Swift/Service/OpenAI/OpenAIStreamTransport.swift
+  Easydict/Swift/Feature/Shortcut/View/AppShortcutSettingView.swift
+  Easydict/Swift/View/AdvancedTabItemView.swift
   Easydict/Swift/View/SettingView/Tabs/ServiceConfigurationView/ClaudeCodeServiceConfigurationView.swift
   Easydict/Swift/View/SettingView/Tabs/ServiceConfigurationView/CodexCLIServiceConfigurationView.swift
   Easydict/Swift/View/SettingView/Tabs/ServiceConfigurationView/CodexManagedAccountView.swift
+  Easydict/Swift/View/SettingView/Tabs/TabView/AdvancedTab.swift
+  Easydict/Swift/View/SettingView/Tabs/TabView/DisabledAppTab.swift
+  Easydict/Swift/View/SettingView/Tabs/TabView/FavoritesTab.swift
   Easydict/Swift/View/SettingView/Tabs/TabView/PrivacyTab.swift
 ].freeze
 

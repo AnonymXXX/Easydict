@@ -8,15 +8,12 @@
 
 import Defaults
 import LaunchAtLogin
-import SFSafeSymbols
 import SwiftUI
 
 // MARK: - GeneralTab
 
 struct GeneralTab: View {
     // MARK: Internal
-
-    @Environment(\.colorScheme) var colorScheme
 
     var body: some View {
         Form {
@@ -28,205 +25,33 @@ struct GeneralTab: View {
 
             Section {
                 Toggle("clear_input_when_translating", isOn: $clearInput)
-                Toggle(
-                    "keep_prev_result_when_selected_text_is_empty", isOn: $keepPrevResultWhenEmpty
-                )
-                Toggle(
-                    "select_query_text_when_window_activate",
-                    isOn: $selectQueryTextWhenWindowActivate
-                )
+                Toggle("auto_query_selected_text", isOn: $autoQuerySelectedText)
+                Toggle("auto_query_ocr_text", isOn: $autoQueryOCRText)
+                Toggle("auto_copy_ocr_text", isOn: $autoCopyOCRText)
             } header: {
                 Text("setting.general.input.header")
             }
 
             Section {
-                Toggle("auto_query_selected_text", isOn: $autoQuerySelectedText)
-                Toggle("auto_query_ocr_text", isOn: $autoQueryOCRText)
-                Toggle("auto_query_pasted_text", isOn: $autoQueryPastedText)
-                Toggle("auto_query_when_text_changed", isOn: $autoQueryWhenTextChanged)
-                Toggle("setting.general.voice.auto_play_word_audio", isOn: $autoPlayAudio)
-                Picker(
-                    "setting.general.voice.english_pronunciation",
-                    selection: $pronunciation
-                ) {
-                    ForEach(EnglishPronunciation.allCases, id: \.rawValue) { option in
-                        Text(option.localizedStringResource)
-                            .tag(option)
-                    }
-                }
-            } header: {
-                Text("setting.general.auto_query.header")
-            }
-
-            Section {
-                Toggle("auto_copy_selected_text", isOn: $autoCopySelectedText)
-                Toggle("auto_copy_ocr_text", isOn: $autoCopyOCRText)
-                Toggle("auto_copy_first_translated_text", isOn: $autoCopyFirstTranslatedText)
-            } header: {
-                Text("setting.general.auto_copy.header")
-            }
-
-            Section {
-                Toggle("show_setting_quick_link", isOn: $showQuickActionButton)
-            } header: {
-                Text("setting.general.quick_link.header")
-            }
-
-            Section {
-                Toggle(isOn: $enableMarkdownRendering) {
-                    Label(
-                        "setting.general.display.enable_markdown_rendering",
-                        systemSymbol: .docRichtext
-                    )
-                }
-            } header: {
-                Text("setting.general.display.header")
-            } footer: {
-                Text("setting.general.display.enable_markdown_rendering.description")
-                    .font(.footnote)
-            }
-
-            Section {
-                Picker("setting.general.language", selection: $languageState.language) {
-                    ForEach(LanguageState.LanguageType.allCases, id: \.rawValue) { language in
-                        Text(language.name)
-                            .tag(language)
-                    }
-                }
-                Picker(
-                    "setting.general.appearance.light_dark_appearance", selection: $appearanceType
-                ) {
-                    ForEach(AppearanceType.allCases, id: \.rawValue) { option in
-                        Text(option.title)
-                            .tag(option)
-                    }
-                }
-
                 LaunchAtLogin.Toggle {
                     Text("launch_at_startup")
                 }
                 .onChange(of: LaunchAtLogin.isEnabled) { newValue in
                     logSettings(["launch_at_startup": newValue])
                 }
-
-                Toggle(
-                    isOn: $hideMenuBarIcon.didSet(execute: { state in
-                        if state {
-                            // user is not set input shortcut and selection shortcut not allow hide menu bar
-                            if !shortcutsHaveSetuped {
-                                Defaults[.hideMenuBarIcon] = false
-                                showRefuseAlert = true
-                            } else {
-                                showHideMenuBarIconAlert = true
-                            }
-                        }
-                    })
-                ) {
-                    Text("hide_menu_bar_icon")
-                }
-                Picker(
-                    "modify_menubar_icon",
-                    selection: $selectedMenuBarIcon
-                ) {
-                    ForEach(MenuBarIconType.allCases) { option in
-                        Label {
-                            EmptyView()
-                        } icon: {
-                            Image(option.rawValue)
-                                .renderingMode(.template)
-                        }
-                        .labelStyle(.iconOnly)
-                    }
-                }
-
             } header: {
                 Text("setting.general.app_setting.header")
             }
-
-            Section {
-                let bindingFontSize = Binding<Double>(
-                    get: {
-                        Double(fontSizeOptionIndex)
-                    },
-                    set: { newValue in
-                        fontSizeOptionIndex = UInt(newValue)
-                    }
-                )
-                Slider(value: bindingFontSize, in: 0.0 ... 4.0, step: 1) {
-                    Text("setting.general.font.font_size.label")
-                } minimumValueLabel: {
-                    Text("small")
-                        .font(.system(size: 10))
-                } maximumValueLabel: {
-                    Text("large")
-                        .font(.system(size: 14))
-                }
-            } header: {
-                Text("setting.general.font.header")
-            } footer: {
-                Text("hints_keyboard_shortcuts_font_size")
-                    .font(.footnote)
-            }
         }
         .formStyle(.grouped)
-        .alert("hide_menu_bar_icon", isPresented: $showRefuseAlert) {
-            Button("ok") {
-                showRefuseAlert = false
-            }
-        } message: {
-            Text("refuse_hide_menu_bar_icon_msg")
-        }
-        .alert("hide_menu_bar_icon", isPresented: $showHideMenuBarIconAlert) {
-            HStack {
-                Button("ok") {
-                    showHideMenuBarIconAlert = false
-                }
-                Button("cancel") {
-                    Defaults[.hideMenuBarIcon] = false
-                }
-            }
-        } message: {
-            Text("hide_menu_bar_icon_msg")
-        }
     }
 
     // MARK: Private
 
-    // App setting
-    @EnvironmentObject private var languageState: LanguageState
-    @State private var showRefuseAlert = false
-    @State private var showHideMenuBarIconAlert = false
-
-    // Input textfield
     @Default(.clearQueryWhenInputTranslate) private var clearInput
-    @Default(.keepPrevResultWhenSelectTranslateTextIsEmpty) private var keepPrevResultWhenEmpty
-    @Default(.selectQueryTextWhenWindowActivate) private var selectQueryTextWhenWindowActivate
-
-    // Auto query
     @Default(.autoQueryOCRText) private var autoQueryOCRText
     @Default(.autoQuerySelectedText) private var autoQuerySelectedText
-    @Default(.autoQueryPastedText) private var autoQueryPastedText
-    @Default(.autoQueryWhenTextChanged) private var autoQueryWhenTextChanged
-    @Default(.autoPlayAudio) private var autoPlayAudio
-    @Default(.pronunciation) private var pronunciation
-
-    // Auto copy
     @Default(.autoCopyOCRText) private var autoCopyOCRText
-    @Default(.autoCopySelectedText) private var autoCopySelectedText
-    @Default(.autoCopyFirstTranslatedText) private var autoCopyFirstTranslatedText
-
-    // Quick link
-    @Default(.showQuickActionButton) private var showQuickActionButton
-
-    @Default(.appearanceType) private var appearanceType
-    @Default(.hideMenuBarIcon) private var hideMenuBarIcon
-    @Default(.selectedMenuBarIcon) private var selectedMenuBarIcon
-    @Default(.fontSizeOptionIndex) private var fontSizeOptionIndex
-    @Default(.enableMarkdownRendering) private var enableMarkdownRendering
-
-    private var shortcutsHaveSetuped: Bool {
-        Defaults[.inputShortcut] != nil || Defaults[.selectionShortcut] != nil
-    }
 
     private func logSettings(_ parameters: [String: Any]) {
         AnalyticsService.logEvent(withName: "settings", parameters: parameters)
