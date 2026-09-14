@@ -71,14 +71,12 @@ struct EasydictApp: App {
                         }
                     }
             } icon: {
-                Image(menuBarIcon.rawValue)
-                    .resizable()
+                Image(nsImage: paddedMenuBarIcon)
                 #if DEBUG
                     .renderingMode(.original)
                 #else
                     .renderingMode(.template)
                 #endif
-                    .scaledToFit()
             }
             .help("Easydict 🍃")
         }
@@ -95,6 +93,29 @@ struct EasydictApp: App {
     }
 
     // MARK: Private
+
+    private var paddedMenuBarIcon: NSImage {
+        guard let sourceImage = NSImage(named: menuBarIcon.rawValue) else {
+            return NSImage()
+        }
+
+        let canvasSize = NSSize(width: 20, height: 20)
+        let visibleSize = NSSize(width: 15, height: 15)
+        let image = NSImage(size: canvasSize, flipped: false) { bounds in
+            let destinationRect = NSRect(
+                x: (bounds.width - visibleSize.width) / 2,
+                y: (bounds.height - visibleSize.height) / 2,
+                width: visibleSize.width,
+                height: visibleSize.height
+            )
+            sourceImage.draw(in: destinationRect)
+            return true
+        }
+        #if !DEBUG
+        image.isTemplate = true
+        #endif
+        return image
+    }
 
     @Environment(\.openSettingsLegacy) private var openSettingsLegacy
     @Environment(\.openWindow) private var openWindow
