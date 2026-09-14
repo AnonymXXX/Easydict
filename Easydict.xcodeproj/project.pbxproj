@@ -200,7 +200,6 @@
 		038A9BC92E59A77900D08B57 /* ocr-en-text-list-2.png in Resources */ = {isa = PBXBuildFile; fileRef = 038A9BC82E59A77900D08B57 /* ocr-en-text-list-2.png */; };
 		038A9BCB2E59B4EC00D08B57 /* ocr-en-poetry-8.png in Resources */ = {isa = PBXBuildFile; fileRef = 038A9BCA2E59B4EC00D08B57 /* ocr-en-poetry-8.png */; };
 		038A9BCD2E59B62C00D08B57 /* ocr-en-text-list-3.png in Resources */ = {isa = PBXBuildFile; fileRef = 038A9BCC2E59B62C00D08B57 /* ocr-en-text-list-3.png */; };
-		038EA1AA2B41169C008A6DD1 /* ZipArchive in Frameworks */ = {isa = PBXBuildFile; productRef = 038EA1A92B41169C008A6DD1 /* ZipArchive */; };
 		038EA1AD2B41282F008A6DD1 /* MJExtension in Frameworks */ = {isa = PBXBuildFile; productRef = 038EA1AC2B41282F008A6DD1 /* MJExtension */; };
 		038F1F8F2BAD838F00CD2F65 /* NSMenu+PopUpBelowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 038F1F8E2BAD838F00CD2F65 /* NSMenu+PopUpBelowView.swift */; };
 		03916D712E68154F007E50D7 /* Task+Sleep.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03916D702E68154F007E50D7 /* Task+Sleep.swift */; };
@@ -1267,7 +1266,6 @@
 				03B63ABF2A86967800E155ED /* CoreServices.framework in Frameworks */,
 				04D7C0A22F00000100D1C7A1 /* libz.tbd in Frameworks */,
 				038030972B4106800009230C /* CocoaLumberjackSwift in Frameworks */,
-				038EA1AA2B41169C008A6DD1 /* ZipArchive in Frameworks */,
 				03E534BC2CE0D38C00B37264 /* AcknowList in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -3741,7 +3739,6 @@
 				03022F212B36D1A400B63209 /* SnapKit */,
 				038030942B4106800009230C /* CocoaLumberjack */,
 				038030962B4106800009230C /* CocoaLumberjackSwift */,
-				038EA1A92B41169C008A6DD1 /* ZipArchive */,
 				038EA1AC2B41282F008A6DD1 /* MJExtension */,
 				EA3B81FB2B52555C004C0E8B /* Defaults */,
 				967712E92B5B913600105E0F /* KeyHolder */,
@@ -3798,7 +3795,6 @@
 				03022F1A2B35DEBA00B63209 /* XCRemoteSwiftPackageReference "Hue" */,
 				03022F202B36D1A300B63209 /* XCRemoteSwiftPackageReference "SnapKit" */,
 				038030932B4106800009230C /* XCRemoteSwiftPackageReference "CocoaLumberjack" */,
-				038EA1A82B41169C008A6DD1 /* XCRemoteSwiftPackageReference "ZipArchive" */,
 				038EA1AB2B41282F008A6DD1 /* XCRemoteSwiftPackageReference "MJExtension" */,
 				EA3B81FA2B52555C004C0E8B /* XCRemoteSwiftPackageReference "Defaults" */,
 				967712E82B5B913600105E0F /* XCRemoteSwiftPackageReference "KeyHolder" */,
@@ -4763,14 +4759,6 @@
 				minimumVersion = 3.7.1;
 			};
 		};
-		038EA1A82B41169C008A6DD1 /* XCRemoteSwiftPackageReference "ZipArchive" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/ZipArchive/ZipArchive.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 2.5.5;
-			};
-		};
 		038EA1AB2B41282F008A6DD1 /* XCRemoteSwiftPackageReference "MJExtension" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/CoderMJLee/MJExtension";
@@ -4880,11 +4868,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 038030932B4106800009230C /* XCRemoteSwiftPackageReference "CocoaLumberjack" */;
 			productName = CocoaLumberjackSwift;
-		};
-		038EA1A92B41169C008A6DD1 /* ZipArchive */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 038EA1A82B41169C008A6DD1 /* XCRemoteSwiftPackageReference "ZipArchive" */;
-			productName = ZipArchive;
 		};
 		038EA1AC2B41282F008A6DD1 /* MJExtension */ = {
 			isa = XCSwiftPackageProductDependency;

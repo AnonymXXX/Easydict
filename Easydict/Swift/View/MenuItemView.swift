@@ -10,7 +10,6 @@ import Defaults
 import SettingsAccess
 import SFSafeSymbols
 import SwiftUI
-import ZipArchive
 
 // MARK: - MenuItemView
 
@@ -32,10 +31,6 @@ struct MenuItemView: View {
             Divider()
 
             settingItem.keyboardShortcut(.init(","))
-            helpItem
-
-            Divider()
-
             quitItem.keyboardShortcut(.init("q"))
         }
     }
@@ -106,50 +101,6 @@ struct MenuItemView: View {
         }
     }
 
-    /// Help item
-    @ViewBuilder private var helpItem: some View {
-        Menu("Help") {
-            Button("Feedback") {
-                logInfo("Open Feedback")
-                guard let versionURL = URL(string: "\(EZGithubRepoEasydictURL)/issues") else {
-                    return
-                }
-                openURL(versionURL)
-            }
-            Button("Export Log") {
-                exportLogAction()
-            }
-            Button("Log Directory") {
-                logInfo("Open Log Directory")
-                let logPath = MMManagerForLog.rootLogDirectory() ?? ""
-                let directoryURL = URL(fileURLWithPath: logPath)
-                NSWorkspace.shared.open(directoryURL)
-            }
-        }
-    }
-
-    private func exportLogAction() {
-        logInfo("Export Log")
-        let logPath = MMManagerForLog.rootLogDirectory() ?? ""
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd HH-mm-ss-SSS"
-        let dataString = dateFormatter.string(from: Date())
-        let downloadDirectory = FileManager.default.urls(
-            for: .downloadsDirectory, in: .userDomainMask
-        )[0]
-        let zipPath = downloadDirectory.appendingPathComponent("Easydict log \(dataString).zip")
-            .path(percentEncoded: false)
-        let success = SSZipArchive.createZipFile(
-            atPath: zipPath,
-            withContentsOfDirectory: logPath,
-            keepParentDirectory: false
-        )
-        if success {
-            NSWorkspace.shared.selectFile(zipPath, inFileViewerRootedAtPath: "")
-        } else {
-            logError("Export log failed")
-        }
-    }
 }
 
 // MARK: - MenuItemView Extensions
