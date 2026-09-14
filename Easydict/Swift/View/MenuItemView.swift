@@ -28,11 +28,6 @@ struct MenuItemView: View {
 
             inputItem.keyboardShortcut(.inputTranslate)
             screenshotItem.keyboardShortcut(.snipTranslate)
-            selectWordItem.keyboardShortcut(.selectTranslate)
-
-            Divider()
-
-            silentScreenshotOCRItem.keyboardShortcut(.silentScreenshotOCR)
 
             Divider()
 
@@ -64,14 +59,6 @@ struct MenuItemView: View {
 
     @ViewBuilder private var screenshotItem: some View {
         menuItem(for: .snipTranslate)
-    }
-
-    @ViewBuilder private var selectWordItem: some View {
-        menuItem(for: .selectTranslate)
-    }
-
-    @ViewBuilder private var silentScreenshotOCRItem: some View {
-        menuItem(for: .silentScreenshotOCR)
     }
 
     // MARK: - Other Items

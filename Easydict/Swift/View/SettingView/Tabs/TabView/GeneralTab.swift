@@ -25,7 +25,6 @@ struct GeneralTab: View {
 
             Section {
                 Toggle("clear_input_when_translating", isOn: $clearInput)
-                Toggle("auto_query_selected_text", isOn: $autoQuerySelectedText)
                 Toggle("auto_query_ocr_text", isOn: $autoQueryOCRText)
                 Toggle("auto_copy_ocr_text", isOn: $autoCopyOCRText)
             } header: {
@@ -50,7 +49,6 @@ struct GeneralTab: View {
 
     @Default(.clearQueryWhenInputTranslate) private var clearInput
     @Default(.autoQueryOCRText) private var autoQueryOCRText
-    @Default(.autoQuerySelectedText) private var autoQuerySelectedText
     @Default(.autoCopyOCRText) private var autoCopyOCRText
 
     private func logSettings(_ parameters: [String: Any]) {

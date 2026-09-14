@@ -43,10 +43,8 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - Menu Actions, Global Shorcut
 
 - (void)inputTranslate;
-- (void)selectTextTranslate;
 - (void)showMiniFloatingWindow;
 - (void)snipTranslate;
-- (void)silentScreenshotOCR;
 - (void)screenshotOCR;
 - (void)pasteboardTranslate:(EZWindowType)windowType;
 

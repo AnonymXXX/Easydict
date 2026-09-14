@@ -342,14 +342,8 @@ class ShortcutWrapper<T: KeyCombo> {
 /// shortcut
 extension Defaults.Keys {
     // Global
-    static let selectionShortcut = Key<KeyCombo?>("EZSelectionShortcutKey_keyHolder")
-    static let toggleAutoSelectTextShortcut = Key<KeyCombo?>(
-        "EZToggleAutoSelectTextShortcutKey_keyHolder"
-    )
     static let snipShortcut = Key<KeyCombo?>("EZSnipShortcutKey_keyHolder")
     static let inputShortcut = Key<KeyCombo?>("EZInputShortcutKey_keyHolder")
-    // Note: This key value is not suitable for renaming, because it is used in old versions.
-    static let silentScreenshotOCRShortcut = Key<KeyCombo?>("EZScreenshotOCRShortcutKey_keyHolder")
     static let showMiniWindowShortcut = Key<KeyCombo?>("EZShowMiniShortcutKey_keyHolder")
     static let pasteboardTranslateShortcut = Key<KeyCombo?>(
         "EZPasteboardTranslateShortcutKey_keyHolder"

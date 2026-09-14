@@ -792,33 +792,6 @@ static EZWindowManager *_instance;
 
 #pragma mark - Menu Actions, Global Shortcut
 
-- (void)selectTextTranslate {
-    MMLogInfo(@"selectTextTranslate");
-
-    if (![self.eventMonitor isAccessibilityEnabled]) {
-        MMLogWarn(@"App is not trusted");
-        return;
-    }
-
-    [self saveFrontmostApplication];
-    if (Screenshot.shared.isTakingScreenshot) {
-        return;
-    }
-
-    EZWindowType windowType = MyConfiguration.shared.shortcutSelectTranslateWindowType;
-    MMLogInfo(@"selectTextTranslate windowType: %@", @(windowType));
-    self.eventMonitor.actionType = EZActionTypeShortcutQuery;
-    [self.eventMonitor getSelectedTextWithCompletion:^(NSString *_Nullable text) {
-        self.actionType = self.eventMonitor.actionType;
-        self.selectedText = text;
-
-        // Run it on main thread to avoid some UI bugs.
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [self showFloatingWindowType:windowType queryText:self.selectedText];
-        });
-    }];
-}
-
 - (void)inputTranslate {
     MMLogInfo(@"inputTranslate");
 
@@ -867,22 +840,6 @@ static EZWindowManager *_instance;
     [self captureWithRestorePreviousApp:NO completion:^(NSImage *_Nullable image) {
         BOOL autoQuery = [MyConfiguration.shared autoQueryOCRText];
         [self showFloatingWindowWithOCRImage:image autoQuery:autoQuery actionType:EZActionTypeOCRQuery];
-    }];
-}
-
-/// Silent screenshot and OCR, without showing floating window.
-- (void)silentScreenshotOCR {
-    MMLogInfo(@"Silent screenshot and OCR");
-
-    [self captureWithRestorePreviousApp:YES completion:^(NSImage *_Nullable image) {
-        if (!image) {
-            return;
-        }
-
-        self.actionType = EZActionTypeScreenshotOCR;
-        EZBaseQueryViewController *viewController = self.backgroundQueryViewController;
-        [viewController resetQueryModelForBackgroundOCR];
-        [viewController startOCRImage:image actionType:self.actionType autoQuery:NO];
     }];
 }
 

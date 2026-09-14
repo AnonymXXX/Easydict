@@ -38,6 +38,7 @@ class MyConfiguration: NSObject {
 
     override private init() {
         super.init()
+        Defaults[.autoShowQueryIcon] = false
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             observeKeys()
