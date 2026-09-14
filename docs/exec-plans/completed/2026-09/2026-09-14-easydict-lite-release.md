@@ -1,9 +1,10 @@
 # 发布 Easydict Lite 首个版本
 
-- 状态：active
+- 状态：completed
 - 创建日期：2026-09-14
+- 完成日期：2026-09-14
 - 负责人：AnonymXXX
-- 关联 Issue/PR：none
+- 关联 Release：https://github.com/AnonymXXX/Easydict/releases/tag/v2.22.0-lite.1
 
 ## 背景
 
@@ -39,10 +40,10 @@ GitHub 仓库也没有可下载的 Release。
 - [x] 核对版本、仓库和现有 Release 状态。
 - [x] 更新 Lite 版 README。
 - [x] 完成 Release 构建、签名和 DMG 验证。
-- [ ] 提交并推送 README。
-- [ ] 创建并验证 GitHub Draft Release。
-- [ ] 确认并执行公开发布。
-- [ ] 写入 history 并归档计划。
+- [x] 提交并推送 README。
+- [x] 创建并验证 GitHub Draft Release。
+- [x] 经用户确认公开发布并设为 Latest。
+- [x] 写入 history 并归档计划。
 
 ## 验证
 
@@ -50,8 +51,11 @@ GitHub 仓库也没有可下载的 Release。
   `com.anonymxxx.EasydictLite`，主程序架构为 `arm64`。
 - 稳定本地身份签名和 `codesign --verify --deep --strict` 通过。
 - `hdiutil verify` 通过；DMG 内应用、`Applications` 链接、版本、架构和签名检查通过。
-- `spctl --assess` 因未使用 Apple Developer ID 和公证而拒绝，README 与 Release 说明必须
-  保留首次右键打开的提示。
+- `spctl --assess` 因未使用 Apple Developer ID 和公证而拒绝，README 与 Release 正文已保留
+  首次右键打开的提示。
+- DMG SHA-256 为 `08cb2694559dc4801830d5c3ebbc1fa41314a9f31018e605223227f1696ab5f2`。
+- GitHub API 回读确认 Release 已公开、为 Latest，两个资产状态均为 `uploaded`；远端 Tag 与
+  `origin/dev` 均解析到 `7d23dcbd183bca5e5627a3fc6ec56095a510da83`。
 
 ## 完成条件
 
