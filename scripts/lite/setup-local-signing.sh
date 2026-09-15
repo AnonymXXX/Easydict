@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-readonly IDENTITY_NAME="Easydict Lite Local Code Signing"
+readonly IDENTITY_NAME="${LOCAL_APP_SIGNING_IDENTITY:-Local Mac App Code Signing}"
 readonly LOGIN_KEYCHAIN="${HOME}/Library/Keychains/login.keychain-db"
 
 require_command() {
@@ -30,7 +30,7 @@ if has_signing_identity; then
     exit 0
 fi
 
-temporary_directory="$(mktemp -d "${TMPDIR%/}/easydict-lite-signing.XXXXXX")"
+temporary_directory="$(mktemp -d "${TMPDIR%/}/local-app-signing.XXXXXX")"
 chmod 700 "$temporary_directory"
 
 cleanup() {
@@ -38,8 +38,7 @@ cleanup() {
     for temporary_file in \
         "$temporary_directory/private-key.pem" \
         "$temporary_directory/certificate.pem" \
-        "$temporary_directory/identity.p12" \
-        "$temporary_directory/openssl.cnf"; do
+        "$temporary_directory/identity.p12"; do
         if [[ -f "$temporary_file" ]]; then
             rm -P "$temporary_file"
         fi
@@ -48,31 +47,18 @@ cleanup() {
 }
 trap cleanup EXIT
 
-cat >"$temporary_directory/openssl.cnf" <<CONFIG
-[req]
-distinguished_name = distinguished_name
-x509_extensions = code_signing_extensions
-prompt = no
-
-[distinguished_name]
-CN = ${IDENTITY_NAME}
-O = Local Development
-
-[code_signing_extensions]
-basicConstraints = critical,CA:false
-keyUsage = critical,digitalSignature
-extendedKeyUsage = critical,codeSigning
-subjectKeyIdentifier = hash
-authorityKeyIdentifier = keyid,issuer
-CONFIG
-
 openssl req \
     -x509 \
     -newkey rsa:2048 \
     -sha256 \
     -days 3650 \
     -nodes \
-    -config "$temporary_directory/openssl.cnf" \
+    -subj "/CN=${IDENTITY_NAME}/O=Local Development" \
+    -addext "basicConstraints=critical,CA:false" \
+    -addext "keyUsage=critical,digitalSignature" \
+    -addext "extendedKeyUsage=critical,codeSigning" \
+    -addext "subjectKeyIdentifier=hash" \
+    -addext "authorityKeyIdentifier=keyid,issuer" \
     -keyout "$temporary_directory/private-key.pem" \
     -out "$temporary_directory/certificate.pem" \
     >/dev/null 2>&1
@@ -80,6 +66,7 @@ openssl req \
 p12_password="$(openssl rand -hex 32)"
 openssl pkcs12 \
     -export \
+    -legacy \
     -name "$IDENTITY_NAME" \
     -inkey "$temporary_directory/private-key.pem" \
     -in "$temporary_directory/certificate.pem" \

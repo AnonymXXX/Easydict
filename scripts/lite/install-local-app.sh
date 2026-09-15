@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-readonly IDENTITY_NAME="${EASYDICT_LITE_SIGNING_IDENTITY:-Easydict Lite Local Code Signing}"
+readonly IDENTITY_NAME="${LOCAL_APP_SIGNING_IDENTITY:-Local Mac App Code Signing}"
 readonly EXPECTED_BUNDLE_ID="com.anonymxxx.EasydictLite"
 readonly DEFAULT_SOURCE_APP="/tmp/EasydictLiteDerivedData/Build/Products/Release/Easydict Lite.app"
 readonly SOURCE_APP="${1:-$DEFAULT_SOURCE_APP}"
