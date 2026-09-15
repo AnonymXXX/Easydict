@@ -20,6 +20,7 @@
 
 - 输入翻译：默认快捷键 `⌥ A`
 - 截图翻译：默认快捷键 `⌥ S`
+- 三指轻点取词：无需预先选中，轻点光标下单词后自动翻译
 - Apple Vision 本地 OCR
 - 有道词典与翻译
 - DeepSeek AI 翻译
@@ -42,6 +43,9 @@
 Easydict Lite。当前发布包使用个人本地签名，未经过 Apple 公证，主要用于本项目维护者的 Mac；
 macOS 首次拦截时，在“应用程序”中右键点击 Easydict Lite，选择“打开”，再确认“仍要打开”。
 其他设备建议从源码构建并创建自己的本地签名身份。
+
+使用三指轻点取词前，请在“系统设置 → 触控板 → 光标与点按”中关闭“查询与数据检测器”，
+避免同时弹出 macOS 系统词典。该功能依赖 macOS 内部触控板接口，系统升级后可能需要重新验证。
 
 ## 从源码安装
 
@@ -68,7 +72,7 @@ scripts/lite/install-local-app.sh
 
 ## 说明
 
-- 当前版本：`2.22.0 (65)`，Lite 首发标签为 `v2.22.0-lite.1`
+- 当前版本：`2.22.0 (66)`，当前 Lite 标签为 `v2.22.0-lite.2`
 - Bundle ID：`com.anonymxxx.EasydictLite`
 - 本项目继续遵循 [GPL-3.0](./LICENSE)
 - 原项目版权、致谢与贡献归 [Easydict](https://github.com/tisfeng/Easydict) 及其贡献者所有
