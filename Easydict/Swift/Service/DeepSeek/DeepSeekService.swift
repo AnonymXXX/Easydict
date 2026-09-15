@@ -163,6 +163,7 @@ class DeepSeekService: StreamService {
     // MARK: Private
 
     private var currentTask: Task<(), Never>?
+    private let providerSessionID = UUID().uuidString.lowercased()
 
     private var officialAPIKeyKey: Defaults.Key<String> {
         stringDefaultsKey(.apiKey)
@@ -192,7 +193,7 @@ class DeepSeekService: StreamService {
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-        provider.adapter.configureRequest(&request)
+        provider.adapter.configureRequest(&request, sessionID: providerSessionID)
         request.httpBody = requestBody
         return request
     }
@@ -360,7 +361,7 @@ private protocol DeepSeekProviderAdapter {
     var defaultModel: String { get }
     var supportsReasoningEffort: Bool { get }
 
-    func configureRequest(_ request: inout URLRequest)
+    func configureRequest(_ request: inout URLRequest, sessionID: String)
 
     func makeRequestBody(
         messages: [ChatMessage],
@@ -372,7 +373,7 @@ private protocol DeepSeekProviderAdapter {
 }
 
 extension DeepSeekProviderAdapter {
-    fileprivate func configureRequest(_: inout URLRequest) {}
+    fileprivate func configureRequest(_: inout URLRequest, sessionID _: String) {}
 
     fileprivate func encodeRequest(
         messages: [ChatMessage],
@@ -432,10 +433,10 @@ private struct OpenCodeGoDeepSeekAdapter: DeepSeekProviderAdapter {
     let defaultModel = "deepseek-v4.1-flash"
     let supportsReasoningEffort = false
 
-    func configureRequest(_ request: inout URLRequest) {
+    func configureRequest(_ request: inout URLRequest, sessionID: String) {
         let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "unknown"
         request.setValue("Easydict-Lite/\(version)", forHTTPHeaderField: "User-Agent")
-        request.setValue(UUID().uuidString.lowercased(), forHTTPHeaderField: "x-opencode-session")
+        request.setValue(sessionID, forHTTPHeaderField: "x-opencode-session")
     }
 
     func makeRequestBody(
@@ -445,7 +446,12 @@ private struct OpenCodeGoDeepSeekAdapter: DeepSeekProviderAdapter {
         reasoningEffort _: ReasoningEffort
     ) throws
         -> Data {
-        try encodeRequest(messages: messages, model: model, temperature: temperature)
+        try encodeRequest(
+            messages: messages,
+            model: model,
+            temperature: temperature,
+            thinking: .init(type: "disabled")
+        )
     }
 }
 
