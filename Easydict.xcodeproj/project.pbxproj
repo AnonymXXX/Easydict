@@ -381,6 +381,8 @@
 		03F2D0372F0FE6D600A99FC0 /* RectHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03F2D02A2F0FE6D600A99FC0 /* RectHelper.swift */; };
 		03F2D0382F0FE6D600A99FC0 /* GeometryHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03F2D0292F0FE6D600A99FC0 /* GeometryHelper.swift */; };
 		03F2D0392F0FE6D600A99FC0 /* EventTapMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03F2D0232F0FE6D600A99FC0 /* EventTapMonitor.swift */; };
+		A91500022F11000100C0DE01 /* ThreeFingerTapRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A91500012F11000100C0DE01 /* ThreeFingerTapRecognizer.swift */; };
+		A91500042F11000200C0DE01 /* RawTrackpadMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A91500032F11000200C0DE01 /* RawTrackpadMonitor.swift */; };
 		03F2F08D2E4074FF00496F71 /* CharacterSet+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03F2F08C2E4074FF00496F71 /* CharacterSet+Extension.swift */; };
 		03F2F1A62E54D70500FF71E3 /* OCRWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03F2F1A52E54D70500FF71E3 /* OCRWindow.swift */; };
 		03F4142E2E6B251000FF1994 /* SystemUtility+MenuAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03F4142D2E6B251000FF1994 /* SystemUtility+MenuAction.swift */; };
@@ -1030,6 +1032,8 @@
 		03F2D02A2F0FE6D600A99FC0 /* RectHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RectHelper.swift; sourceTree = "<group>"; };
 		03F2D02C2F0FE6D600A99FC0 /* SelectionWorkflow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectionWorkflow.swift; sourceTree = "<group>"; };
 		03F2D02D2F0FE6D600A99FC0 /* TriggerEvaluator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TriggerEvaluator.swift; sourceTree = "<group>"; };
+		A91500012F11000100C0DE01 /* ThreeFingerTapRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThreeFingerTapRecognizer.swift; sourceTree = "<group>"; };
+		A91500032F11000200C0DE01 /* RawTrackpadMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RawTrackpadMonitor.swift; sourceTree = "<group>"; };
 		03F2F08C2E4074FF00496F71 /* CharacterSet+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CharacterSet+Extension.swift"; sourceTree = "<group>"; };
 		03F2F1A52E54D70500FF71E3 /* OCRWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OCRWindow.swift; sourceTree = "<group>"; };
 		03F4142D2E6B251000FF1994 /* SystemUtility+MenuAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SystemUtility+MenuAction.swift"; sourceTree = "<group>"; };
@@ -3001,6 +3005,7 @@
 			children = (
 				03F2D0222F0FE6D600A99FC0 /* EventMonitorEngine.swift */,
 				03F2D0232F0FE6D600A99FC0 /* EventTapMonitor.swift */,
+				A91500032F11000200C0DE01 /* RawTrackpadMonitor.swift */,
 			);
 			path = Engine;
 			sourceTree = "<group>";
@@ -3034,6 +3039,7 @@
 			isa = PBXGroup;
 			children = (
 				03F2D02C2F0FE6D600A99FC0 /* SelectionWorkflow.swift */,
+				A91500012F11000100C0DE01 /* ThreeFingerTapRecognizer.swift */,
 				03F2D02D2F0FE6D600A99FC0 /* TriggerEvaluator.swift */,
 			);
 			path = Workflow;
@@ -4132,6 +4138,8 @@
 				03F2D0372F0FE6D600A99FC0 /* RectHelper.swift in Sources */,
 				03F2D0382F0FE6D600A99FC0 /* GeometryHelper.swift in Sources */,
 				03F2D0392F0FE6D600A99FC0 /* EventTapMonitor.swift in Sources */,
+				A91500022F11000100C0DE01 /* ThreeFingerTapRecognizer.swift in Sources */,
+				A91500042F11000200C0DE01 /* RawTrackpadMonitor.swift in Sources */,
 				037A9CCD2E29421D00668C49 /* OCRMergeStrategy.swift in Sources */,
 				03D0F0132F00000200ABCDEF /* QueryResult.swift in Sources */,
 				03BDA7BF2A26DA280079D04F /* NSScanner+EscapedScanning.m in Sources */,

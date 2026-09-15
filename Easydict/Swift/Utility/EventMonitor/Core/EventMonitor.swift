@@ -35,8 +35,10 @@ final class EventMonitor: NSObject {
         self.eventMonitorEngine = EventMonitorEngine()
         self.highFrequencyEventMonitorEngine = EventMonitorEngine()
         self.eventTapMonitor = EventTapMonitor()
+        self.rawTrackpadMonitor = RawTrackpadMonitor()
         self.selectionWorkflow = SelectionWorkflow()
         self.triggerEvaluator = TriggerEvaluator()
+        self.threeFingerTapRecognizer = ThreeFingerTapRecognizer()
         self.popButtonController = PopButtonVisibilityController()
         self.appContextProvider = AppContextProvider()
         self.systemUtility = SystemUtility.shared
@@ -132,6 +134,7 @@ final class EventMonitor: NSObject {
             .leftMouseDown,
             .leftMouseUp,
             .rightMouseDown,
+            .gesture,
             .keyDown,
             .keyUp,
             .flagsChanged,
@@ -158,6 +161,11 @@ final class EventMonitor: NSObject {
         eventMonitorEngine.stop()
         highFrequencyEventMonitorEngine.stop()
         eventTapMonitor.stop()
+        rawTrackpadMonitor.stop()
+        threeFingerTapRecognizer.reset()
+        threeFingerCandidatePoint = nil
+        isRawTrackpadMonitorAvailable = false
+        threeFingerLookupGeneration &+= 1
         if let escapeKeyMonitor {
             NSEvent.removeMonitor(escapeKeyMonitor)
             self.escapeKeyMonitor = nil
@@ -171,6 +179,17 @@ final class EventMonitor: NSObject {
                 logInfo("escape")
             }
             return event
+        }
+        rawTrackpadMonitor.touchFrameHandler = { [weak self] positions, timestamp in
+            self?.handleRawTrackpadFrame(positions: positions, timestamp: timestamp)
+        }
+        switch rawTrackpadMonitor.start() {
+        case let .started(deviceCount):
+            isRawTrackpadMonitorAvailable = true
+            logInfo("Started raw trackpad monitor with \(deviceCount) device(s)")
+        case let .unavailable(reason):
+            isRawTrackpadMonitorAvailable = false
+            logError("Raw trackpad monitor unavailable, keep AppKit gesture fallback: \(reason)")
         }
         addBothMonitor(MyConfiguration.shared.autoSelectText)
     }
@@ -204,6 +223,7 @@ final class EventMonitor: NSObject {
         static let dismissPopButtonDelay: TimeInterval = 0.1
         static let delayGetSelectedText: TimeInterval = 0.1
         static let expandedRadius: CGFloat = 120
+        static let threeFingerSelectionDelay: TimeInterval = 0.12
         static let highFrequencyEventMask: NSEvent.EventTypeMask = [.scrollWheel, .mouseMoved]
         /// Throttle interval for mouse-moved events to reduce CPU usage.
         static let mouseMovedThrottleInterval: TimeInterval = 0.1
@@ -212,8 +232,10 @@ final class EventMonitor: NSObject {
     private let eventMonitorEngine: EventMonitorEngine
     private let highFrequencyEventMonitorEngine: EventMonitorEngine
     private let eventTapMonitor: EventTapMonitor
+    private let rawTrackpadMonitor: RawTrackpadMonitor
     private let selectionWorkflow: SelectionWorkflow
     private let triggerEvaluator: TriggerEvaluator
+    private let threeFingerTapRecognizer: ThreeFingerTapRecognizer
     private let popButtonController: PopButtonVisibilityController
     private let appContextProvider: AppContextProvider
     private let systemUtility: SystemUtility
@@ -226,6 +248,9 @@ final class EventMonitor: NSObject {
     private var escapeKeyMonitor: Any?
     private var isAutoSelectTextMonitoringEnabled = false
     private var autoSelectionGeneration: UInt = 0
+    private var threeFingerLookupGeneration: UInt = 0
+    private var threeFingerCandidatePoint: CGPoint?
+    private var isRawTrackpadMonitorAvailable = false
 }
 
 // MARK: - Private Implementation
@@ -278,6 +303,8 @@ extension EventMonitor {
         let mouseLocation = NSEvent.mouseLocation
 
         switch event.type {
+        case .gesture:
+            handleThreeFingerGesture(event)
         case .leftMouseUp:
             EZWindowManager.shared().lastPoint = mouseLocation
             endPoint = mouseLocation
@@ -344,6 +371,106 @@ extension EventMonitor {
                 dismissPopButton()
             }
         }
+    }
+
+    /// Recognizes a short, low-movement gesture made with exactly three touches.
+    ///
+    /// AppKit does not expose a dedicated "three-finger lookup" event. Generic
+    /// gesture events do expose their touches, so we distinguish a tap from a
+    /// swipe without linking the private MultitouchSupport framework.
+    private func handleThreeFingerGesture(_ event: NSEvent) {
+        guard !isRawTrackpadMonitorAvailable else { return }
+        handleThreeFingerTapResult(threeFingerTapRecognizer.consume(event))
+    }
+
+    private func handleRawTrackpadFrame(positions: [CGPoint], timestamp: TimeInterval) {
+        handleThreeFingerTapResult(
+            threeFingerTapRecognizer.consume(positions: positions, timestamp: timestamp)
+        )
+    }
+
+    private func handleThreeFingerTapResult(_ result: ThreeFingerTapRecognizer.Result) {
+        switch result {
+        case .none:
+            return
+        case .began:
+            threeFingerCandidatePoint = CGEvent(source: nil)?.location
+            EZWindowManager.shared().lastPoint = NSEvent.mouseLocation
+        case .recognized:
+            performThreeFingerLookup()
+        }
+    }
+
+    private func performThreeFingerLookup() {
+        threeFingerLookupGeneration &+= 1
+        let generation = threeFingerLookupGeneration
+        EZWindowManager.shared().lastPoint = NSEvent.mouseLocation
+
+        if let point = threeFingerCandidatePoint {
+            selectWord(atQuartzScreenPoint: point)
+        }
+        threeFingerCandidatePoint = nil
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + Constants.threeFingerSelectionDelay) { [weak self] in
+            self?.fillCurrentSelectionFromThreeFingerTap(generation: generation)
+        }
+    }
+
+    /// Double-clicks at the original pointer location so the source application
+    /// selects the word using its own text hit-testing rules.
+    private func selectWord(atQuartzScreenPoint point: CGPoint) {
+        guard let source = CGEventSource(stateID: .hidSystemState) else { return }
+        for clickCount in 1...2 {
+            let down = CGEvent(
+                mouseEventSource: source,
+                mouseType: .leftMouseDown,
+                mouseCursorPosition: point,
+                mouseButton: .left
+            )
+            let up = CGEvent(
+                mouseEventSource: source,
+                mouseType: .leftMouseUp,
+                mouseCursorPosition: point,
+                mouseButton: .left
+            )
+            down?.setIntegerValueField(.mouseEventClickState, value: Int64(clickCount))
+            up?.setIntegerValueField(.mouseEventClickState, value: Int64(clickCount))
+            down?.post(tap: .cghidEventTap)
+            up?.post(tap: .cghidEventTap)
+        }
+    }
+
+    private func fillCurrentSelectionFromThreeFingerTap(generation: UInt) {
+        actionType = .shortcutQuery
+        // Reuse the explicit-user-action fallback path for applications whose
+        // Accessibility selected-text attribute is unavailable.
+        triggerType = .tripleClick
+        selectionWorkflow.getSelectedTextSnapshot { [weak self] snapshot in
+            DispatchQueue.main.async {
+                guard let self,
+                      self.threeFingerLookupGeneration == generation,
+                      let snapshot,
+                      let text = snapshot.text?.removeInvisibleChar().trim(),
+                      !text.isEmpty
+                else {
+                    return
+                }
+
+                self.selectTextType = snapshot.selectTextType
+                self.isSelectedTextEditable = snapshot.isEditable
+                self.showThreeFingerLookup(text)
+            }
+        }
+    }
+
+    private func showThreeFingerLookup(_ text: String) {
+        logInfo("Three-finger lookup: \(text)")
+        EZWindowManager.shared().showFloating(
+            MyConfiguration.shared.shortcutSelectTranslateWindowType,
+            queryText: text,
+            autoQuery: true,
+            actionType: .inputQuery
+        )
     }
 
     /// Routes Cmd+A through the delayed auto-selection workflow.
