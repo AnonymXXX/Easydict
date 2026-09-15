@@ -192,6 +192,7 @@ class DeepSeekService: StreamService {
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        provider.adapter.configureRequest(&request)
         request.httpBody = requestBody
         return request
     }
@@ -359,6 +360,8 @@ private protocol DeepSeekProviderAdapter {
     var defaultModel: String { get }
     var supportsReasoningEffort: Bool { get }
 
+    func configureRequest(_ request: inout URLRequest)
+
     func makeRequestBody(
         messages: [ChatMessage],
         model: String,
@@ -369,6 +372,8 @@ private protocol DeepSeekProviderAdapter {
 }
 
 extension DeepSeekProviderAdapter {
+    fileprivate func configureRequest(_: inout URLRequest) {}
+
     fileprivate func encodeRequest(
         messages: [ChatMessage],
         model: String,
@@ -423,9 +428,15 @@ private struct DeepSeekOfficialAdapter: DeepSeekProviderAdapter {
 private struct OpenCodeGoDeepSeekAdapter: DeepSeekProviderAdapter {
     let link = "https://opencode.ai/v2/docs/console/go"
     let endpoint = "https://opencode.ai/zen/go/v1/chat/completions"
-    let models = ["deepseek-v4-flash", "deepseek-v4-pro"]
-    let defaultModel = "deepseek-v4-flash"
+    let models = ["deepseek-v4.1-flash", "deepseek-v4-flash", "deepseek-v4-pro"]
+    let defaultModel = "deepseek-v4.1-flash"
     let supportsReasoningEffort = false
+
+    func configureRequest(_ request: inout URLRequest) {
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "unknown"
+        request.setValue("Easydict-Lite/\(version)", forHTTPHeaderField: "User-Agent")
+        request.setValue(UUID().uuidString.lowercased(), forHTTPHeaderField: "x-opencode-session")
+    }
 
     func makeRequestBody(
         messages: [ChatMessage],
