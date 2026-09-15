@@ -15320,42 +15320,42 @@
         }
       }
     },
-    "setting.service.window_configuration" : {
+    "setting.service.translation_services" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Window Configuration"
+            "value" : "Translation Services"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Configuración de ventana"
+            "value" : "Servicios de traducción"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ウィンドウ設定"
+            "value" : "翻訳サービス"
           }
         },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nastavenie okna"
+            "value" : "Prekladateľské služby"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "窗口配置"
+            "value" : "翻译服务"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "視窗配置"
+            "value" : "翻譯服務"
           }
         }
       }

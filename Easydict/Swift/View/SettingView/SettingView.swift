@@ -6,6 +6,7 @@
 //  Copyright © 2023 izual. All rights reserved.
 //
 
+import SFSafeSymbols
 import SwiftUI
 
 // MARK: - SettingTab
@@ -28,7 +29,7 @@ struct SettingView: View {
                 .tag(SettingTab.general)
 
             ServiceTab()
-                .tabItem { Label("service", systemImage: "briefcase") }
+                .tabItem { Label("service", systemSymbol: .characterBubble) }
                 .tag(SettingTab.service)
 
             ShortcutTab()
