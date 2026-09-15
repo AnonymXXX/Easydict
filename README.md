@@ -73,7 +73,7 @@ scripts/lite/install-local-app.sh
 
 ## 说明
 
-- 当前版本：`2.22.0 (67)`，当前 Lite 标签为 `v2.22.0-lite.3`
+- 当前版本：`2.22.0 (68)`，当前 Lite 标签为 `v2.22.0-lite.4`
 - Bundle ID：`com.anonymxxx.EasydictLite`
 - 本项目继续遵循 [GPL-3.0](./LICENSE)
 - 原项目版权、致谢与贡献归 [Easydict](https://github.com/tisfeng/Easydict) 及其贡献者所有
