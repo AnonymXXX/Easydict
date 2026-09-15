@@ -339,6 +339,70 @@ struct StreamConfigurationView: View {
     }
 }
 
+// MARK: - DeepSeekConfigurationView
+
+/// Lightweight configuration for choosing between the official DeepSeek API
+/// and OpenCode Go without exposing provider-specific endpoint details.
+struct DeepSeekConfigurationView: View {
+    // MARK: Lifecycle
+
+    init(service: DeepSeekService) {
+        self.service = service
+        self._providerID = .init(service.providerKey)
+    }
+
+    // MARK: Internal
+
+    var body: some View {
+        ServiceConfigurationSecretSectionView(
+            service: service,
+            observeKeys: service.observeKeys
+        ) {
+            Picker("service.configuration.deepseek.provider.title", selection: providerSelection) {
+                ForEach(DeepSeekProvider.allCases, id: \.self) { provider in
+                    Text(provider.title).tag(provider)
+                }
+            }
+
+            SecureInputCell(
+                textFieldTitleKey: "service.configuration.openai.api_key.title",
+                key: service.apiKeyKey,
+                placeholder: service.apiKeyPlaceholder
+            )
+
+            PickerCell(
+                titleKey: "service.configuration.openai.model.title",
+                selectionKey: service.modelKey,
+                valuesKey: service.validModelsKey
+            )
+
+            if service.supportsReasoningEffort {
+                StaticPickerCell(
+                    titleKey: "service.configuration.reasoning_effort.title",
+                    key: service.reasoningEffortDefaultsKey,
+                    values: ReasoningEffort.allCases
+                )
+            }
+        }
+        .id(providerID)
+    }
+
+    // MARK: Private
+
+    private let service: DeepSeekService
+    @Default private var providerID: String
+
+    private var providerSelection: Binding<DeepSeekProvider> {
+        Binding(
+            get: { service.provider },
+            set: { provider in
+                service.selectProvider(provider)
+                providerID = provider.rawValue
+            }
+        )
+    }
+}
+
 // MARK: - RemoteModelsSheet
 
 private struct RemoteModelsSheet: View {

@@ -8,15 +8,21 @@
 
 import Defaults
 import Foundation
+import SwiftUI
 
 // MARK: - DeepSeekService
 
-/// DeepSeek translation service. Layers DeepSeek V4 reasoning parameters
-/// (`thinking.type` and `reasoning_effort`) on top of the OpenAI-compatible
-/// streaming pipeline as a model-agnostic per-service setting, so current
-/// and future DeepSeek models opt in without code changes.
+/// DeepSeek translation service with provider-specific adapters for the
+/// official API and OpenCode Go's OpenAI-compatible API.
 @objc(EZDeepSeekService)
 class DeepSeekService: StreamService {
+    // MARK: Lifecycle
+
+    required init() {
+        super.init()
+        migrateLegacyProviderConfigurationIfNeeded()
+    }
+
     // MARK: Public
 
     public override func cancelStream() {
@@ -32,39 +38,58 @@ class DeepSeekService: StreamService {
     }
 
     public override func link() -> String? {
-        "https://www.deepseek.com/"
+        provider.adapter.link
+    }
+
+    public override func configurationListItems() -> Any? {
+        DeepSeekConfigurationView(service: self)
     }
 
     // MARK: Internal
 
     override var defaultModels: [String] {
-        DeepSeekModel.allCases.map(\.rawValue)
+        provider.adapter.models
     }
 
     override var defaultModel: String {
-        DeepSeekModel.deepseekV4Flash.rawValue
+        provider.adapter.defaultModel
     }
 
     override var observeKeys: [Defaults.Key<String>] {
-        [apiKeyKey, supportedModelsKey]
+        [apiKeyKey]
     }
 
     override var defaultEndpoint: String {
-        "https://api.deepseek.com/v1/chat/completions"
+        provider.adapter.endpoint
     }
 
-    override var remoteModelsEndpoint: String? {
-        "https://api.deepseek.com/models"
+    override var endpoint: String {
+        provider.adapter.endpoint
     }
 
-    override var remoteModelFetchRequiresEndpoint: Bool {
-        false
+    override var apiKeyKey: Defaults.Key<String> {
+        switch provider {
+        case .deepSeekOfficial:
+            officialAPIKeyKey
+        case .openCodeGo:
+            openCodeGoAPIKeyKey
+        }
     }
 
-    /// DeepSeek V4 supports reasoning effort, exposing the shared picker and
-    /// sending `thinking` and `reasoning_effort` to the API.
     override var supportsReasoningEffort: Bool {
-        true
+        provider.adapter.supportsReasoningEffort
+    }
+
+    var providerKey: Defaults.Key<String> {
+        stringDefaultsKey(.provider)
+    }
+
+    var provider: DeepSeekProvider {
+        if let storedProvider = DeepSeekProvider(rawValue: Defaults[providerKey]) {
+            return storedProvider
+        }
+
+        return Self.providerInferred(from: Defaults[legacyEndpointKey])
     }
 
     override func contentStreamTranslate(
@@ -111,7 +136,7 @@ class DeepSeekService: StreamService {
                     )
 
                     let (asyncBytes, response) = try await URLSession.shared.bytes(for: request)
-                    try validateHTTPResponse(response)
+                    try await validateHTTPResponse(response, responseBody: asyncBytes)
                     try await processStreamBytes(asyncBytes, continuation: continuation)
                     continuation.finish()
                 } catch is CancellationError {
@@ -129,36 +154,99 @@ class DeepSeekService: StreamService {
         }
     }
 
+    func selectProvider(_ provider: DeepSeekProvider) {
+        Defaults[providerKey] = provider.rawValue
+        applyConfiguration(for: provider)
+        notifyServiceConfigurationChanged(autoQuery: true)
+    }
+
     // MARK: Private
 
     private var currentTask: Task<(), Never>?
 
+    private var officialAPIKeyKey: Defaults.Key<String> {
+        stringDefaultsKey(.apiKey)
+    }
+
+    private var openCodeGoAPIKeyKey: Defaults.Key<String> {
+        stringDefaultsKey(.openCodeGoAPIKey)
+    }
+
+    private var legacyEndpointKey: Defaults.Key<String> {
+        stringDefaultsKey(.endpoint, defaultValue: DeepSeekOfficialAdapter.chatCompletionsEndpoint)
+    }
+
+    private static func providerInferred(from endpoint: String) -> DeepSeekProvider {
+        endpoint.localizedCaseInsensitiveContains("opencode.ai/zen/go") ? .openCodeGo : .deepSeekOfficial
+    }
+
     private func makeChatRequest(url: URL, messages: [ChatMessage]) throws -> URLRequest {
-        let effort = configuredReasoningEffort
-        let requestBody = DeepSeekChatRequest(
-            messages: messages.map(DeepSeekChatMessage.init),
+        let requestBody = try provider.adapter.makeRequestBody(
+            messages: messages,
             model: model,
             temperature: temperature,
-            stream: true,
-            thinking: .init(type: effort.isEnabled ? "enabled" : "disabled"),
-            reasoningEffort: effort.requestValue
+            reasoningEffort: configuredReasoningEffort
         )
 
         var request = URLRequest(url: url, timeoutInterval: EZNetWorkTimeoutInterval)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-        request.httpBody = try JSONEncoder().encode(requestBody)
+        request.httpBody = requestBody
         return request
     }
 
-    private func validateHTTPResponse(_ response: URLResponse) throws {
+    private func validateHTTPResponse(
+        _ response: URLResponse,
+        responseBody: URLSession.AsyncBytes
+    ) async throws {
         guard let httpResponse = response as? HTTPURLResponse else {
             throw QueryError(type: .api, message: "Invalid DeepSeek response")
         }
 
         guard (200 ... 299).contains(httpResponse.statusCode) else {
-            throw QueryError(type: .api, message: "HTTP \(httpResponse.statusCode)")
+            let errorDetail = try await responseBodyText(from: responseBody)
+            throw QueryError(
+                type: .api,
+                message: "HTTP \(httpResponse.statusCode)",
+                errorDataMessage: errorDetail
+            )
+        }
+    }
+
+    private func responseBodyText(from responseBody: URLSession.AsyncBytes) async throws -> String? {
+        let maximumErrorBodySize = 8_192
+        var data = Data()
+
+        for try await byte in responseBody {
+            guard data.count < maximumErrorBodySize else { break }
+            data.append(byte)
+        }
+
+        let detail = String(data: data, encoding: .utf8)?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        return detail?.isEmpty == false ? detail : nil
+    }
+
+    private func migrateLegacyProviderConfigurationIfNeeded() {
+        guard Defaults[providerKey].isEmpty else { return }
+
+        let inferredProvider = Self.providerInferred(from: Defaults[legacyEndpointKey])
+        if inferredProvider == .openCodeGo,
+           Defaults[openCodeGoAPIKeyKey].isEmpty {
+            Defaults[openCodeGoAPIKeyKey] = Defaults[officialAPIKeyKey]
+        }
+
+        Defaults[providerKey] = inferredProvider.rawValue
+        applyConfiguration(for: inferredProvider)
+    }
+
+    private func applyConfiguration(for provider: DeepSeekProvider) {
+        let adapter = provider.adapter
+        Defaults[supportedModelsKey] = supportedModels(from: adapter.models)
+        Defaults[validModelsKey] = adapter.models
+        if !adapter.models.contains(Defaults[modelKey]) {
+            Defaults[modelKey] = adapter.defaultModel
         }
     }
 
@@ -233,13 +321,121 @@ class DeepSeekService: StreamService {
     }
 }
 
-// MARK: - DeepSeekModel
+// MARK: - DeepSeekProvider
 
-enum DeepSeekModel: String, CaseIterable {
-    // Docs: https://api-docs.deepseek.com
-    // Pricing: https://api-docs.deepseek.com/quick_start/pricing
-    case deepseekV4Flash = "deepseek-v4-flash"
-    case deepseekV4Pro = "deepseek-v4-pro"
+enum DeepSeekProvider: String, CaseIterable, Equatable {
+    case deepSeekOfficial = "deepseek_official"
+    case openCodeGo = "opencode_go"
+
+    // MARK: Internal
+
+    var title: LocalizedStringKey {
+        switch self {
+        case .deepSeekOfficial:
+            "service.configuration.deepseek.provider.official"
+        case .openCodeGo:
+            "service.configuration.deepseek.provider.opencode_go"
+        }
+    }
+
+    // MARK: Fileprivate
+
+    fileprivate var adapter: any DeepSeekProviderAdapter {
+        switch self {
+        case .deepSeekOfficial:
+            DeepSeekOfficialAdapter()
+        case .openCodeGo:
+            OpenCodeGoDeepSeekAdapter()
+        }
+    }
+}
+
+// MARK: - DeepSeekProviderAdapter
+
+private protocol DeepSeekProviderAdapter {
+    var link: String { get }
+    var endpoint: String { get }
+    var models: [String] { get }
+    var defaultModel: String { get }
+    var supportsReasoningEffort: Bool { get }
+
+    func makeRequestBody(
+        messages: [ChatMessage],
+        model: String,
+        temperature: Double,
+        reasoningEffort: ReasoningEffort
+    ) throws
+        -> Data
+}
+
+extension DeepSeekProviderAdapter {
+    fileprivate func encodeRequest(
+        messages: [ChatMessage],
+        model: String,
+        temperature: Double,
+        thinking: DeepSeekThinking? = nil,
+        reasoningEffort: String? = nil
+    ) throws
+        -> Data {
+        try JSONEncoder().encode(
+            DeepSeekChatRequest(
+                messages: messages.map(DeepSeekChatMessage.init),
+                model: model,
+                temperature: temperature,
+                stream: true,
+                thinking: thinking,
+                reasoningEffort: reasoningEffort
+            )
+        )
+    }
+}
+
+// MARK: - DeepSeekOfficialAdapter
+
+private struct DeepSeekOfficialAdapter: DeepSeekProviderAdapter {
+    static let chatCompletionsEndpoint = "https://api.deepseek.com/v1/chat/completions"
+
+    let link = "https://platform.deepseek.com/"
+    let endpoint = Self.chatCompletionsEndpoint
+    let models = ["deepseek-flash", "deepseek-v4-pro"]
+    let defaultModel = "deepseek-flash"
+    let supportsReasoningEffort = true
+
+    func makeRequestBody(
+        messages: [ChatMessage],
+        model: String,
+        temperature: Double,
+        reasoningEffort: ReasoningEffort
+    ) throws
+        -> Data {
+        try encodeRequest(
+            messages: messages,
+            model: model,
+            temperature: temperature,
+            thinking: .init(type: reasoningEffort.isEnabled ? "enabled" : "disabled"),
+            reasoningEffort: reasoningEffort.requestValue
+        )
+    }
+}
+
+// MARK: - OpenCodeGoDeepSeekAdapter
+
+private struct OpenCodeGoDeepSeekAdapter: DeepSeekProviderAdapter {
+    let link = "https://opencode.ai/v2/docs/console/go"
+    let endpoint = "https://opencode.ai/zen/go/v1/chat/completions"
+    let models = ["deepseek-v4-flash", "deepseek-v4-pro"]
+    let defaultModel = "deepseek-v4-flash"
+    let supportsReasoningEffort = false
+
+    func makeRequestBody(
+        messages: [ChatMessage],
+        model: String,
+        temperature: Double,
+        reasoningEffort _: ReasoningEffort
+    ) throws
+        -> Data {
+        try encodeRequest(messages: messages, model: model, temperature: temperature)
+    }
 }
 
 // MARK: - DeepSeekChatRequest
@@ -254,7 +450,7 @@ private struct DeepSeekChatRequest: Encodable {
     let model: String
     let temperature: Double
     let stream: Bool
-    let thinking: DeepSeekThinking
+    let thinking: DeepSeekThinking?
     let reasoningEffort: String?
 
     // MARK: Private
