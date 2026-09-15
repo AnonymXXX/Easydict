@@ -8,6 +8,7 @@
 
 import AppKit
 import Foundation
+import UniformTypeIdentifiers
 
 // MARK: - SelectionWorkflow
 
@@ -185,6 +186,17 @@ final class SelectionWorkflow {
             return
         }
 
+        // Three-finger lookup may fall back to a temporary Copy operation when
+        // Accessibility cannot expose the selected text. Do not open that
+        // pasteboard mutation window while an image is waiting to be pasted.
+        // The Accessibility path above remains available, so compatible apps
+        // can still resolve the lookup without touching the pasteboard.
+        if shouldPreserveImagePasteboardForThreeFingerLookup() {
+            logInfo("Image pasteboard is active, skip force get selected text for three-finger lookup")
+            completion(nil)
+            return
+        }
+
         logInfo("Use force get selected text")
 
         if MyConfiguration.shared.forceGetSelectedTextType == .menuBarActionCopy {
@@ -192,6 +204,18 @@ final class SelectionWorkflow {
         } else {
             getSelectedTextBySimulatedKeyFirst(completion)
         }
+    }
+
+    private func shouldPreserveImagePasteboardForThreeFingerLookup() -> Bool {
+        guard EventMonitor.shared.actionType == .shortcutQuery,
+              EventMonitor.shared.triggerType.contains(.tripleClick)
+        else {
+            return false
+        }
+
+        return NSPasteboard.general.types?.contains { type in
+            UTType(type.rawValue)?.conforms(to: .image) == true
+        } == true
     }
 
     private func getSelectedTextBySimulatedKey(_ completion: @escaping (SelectedTextSnapshot?) -> ()) {
