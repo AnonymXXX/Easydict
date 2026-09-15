@@ -103,6 +103,7 @@ BuildTools/.build
 BuildTools/.swiftpm
 
 .tmp/
+dist/
 scripts/release/runs/
 
 # Ignore xcodeproj Package.resolved file, use xcworkspace Package.resolved instead (For CocoaPods

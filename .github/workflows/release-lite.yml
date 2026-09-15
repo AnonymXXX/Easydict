@@ -1,0 +1,131 @@
+name: Release Lite
+
+on:
+  push:
+    tags:
+      - "v*.*.*-lite.*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing Lite release tag to build
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-lite-${{ inputs.tag || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Build and publish Apple Silicon release
+    runs-on: macos-15
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+          fetch-depth: 0
+
+      - name: Import signing certificate
+        env:
+          SIGNING_CERTIFICATE_BASE64: ${{ secrets.MACOS_SIGNING_CERTIFICATE }}
+          SIGNING_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_SIGNING_CERTIFICATE_PASSWORD }}
+          SIGNING_KEYCHAIN_PASSWORD: ${{ secrets.MACOS_SIGNING_KEYCHAIN_PASSWORD }}
+        run: |
+          certificate_path="$RUNNER_TEMP/easydict-lite-signing.p12"
+          certificate_pem_path="$RUNNER_TEMP/easydict-lite-signing.pem"
+          keychain_path="$RUNNER_TEMP/easydict-lite-signing.keychain-db"
+
+          printf '%s' "$SIGNING_CERTIFICATE_BASE64" | /usr/bin/base64 --decode > "$certificate_path"
+          /usr/bin/security create-keychain -p "$SIGNING_KEYCHAIN_PASSWORD" "$keychain_path"
+          /usr/bin/security set-keychain-settings -lut 21600 "$keychain_path"
+          /usr/bin/security unlock-keychain -p "$SIGNING_KEYCHAIN_PASSWORD" "$keychain_path"
+          /usr/bin/security import "$certificate_path" \
+            -P "$SIGNING_CERTIFICATE_PASSWORD" \
+            -A \
+            -t cert \
+            -f pkcs12 \
+            -k "$keychain_path"
+          /usr/bin/security find-certificate \
+            -c "Local Mac App Code Signing" \
+            -p \
+            "$keychain_path" > "$certificate_pem_path"
+          /usr/bin/sudo /usr/bin/security add-trusted-cert \
+            -d \
+            -r trustRoot \
+            -k /Library/Keychains/System.keychain \
+            "$certificate_pem_path"
+          /usr/bin/security list-keychains -d user -s "$keychain_path"
+          /usr/bin/security find-identity -v -p codesigning "$keychain_path"
+
+      - name: Run stable tests
+        run: |
+          xcodebuild test \
+            -workspace Easydict.xcworkspace \
+            -scheme Easydict \
+            -destination 'platform=macOS,arch=arm64' \
+            -derivedDataPath "$RUNNER_TEMP/EasydictLiteDerivedData" \
+            CODE_SIGNING_ALLOWED=NO \
+            -skip-testing:EasydictTests/OCRImageTests \
+            -skip-testing:EasydictTests/SystemUtilitiesTests \
+            -skip-testing:EasydictTests/AppleScriptExecutorTests \
+            -skip-testing:EasydictTests/TaskTimeoutTests \
+            -quiet
+
+      - name: Build and verify release assets
+        env:
+          EASYDICT_LITE_DERIVED_DATA: ${{ runner.temp }}/EasydictLiteDerivedData
+          LOCAL_APP_SIGNING_IDENTITY: Local Mac App Code Signing
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+        run: scripts/lite/package-release.sh "$RELEASE_TAG"
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          if [[ ! "$RELEASE_TAG" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)-lite\.([0-9]+)$ ]]; then
+            echo "Invalid Lite release tag: $RELEASE_TAG" >&2
+            exit 67
+          fi
+
+          app_version="${BASH_REMATCH[1]}"
+          lite_version="${BASH_REMATCH[2]}"
+          release_title="Easydict Lite $app_version (Lite $lite_version)"
+          dmg_path="dist/Easydict-Lite-$app_version-arm64.dmg"
+          checksum_path="$dmg_path.sha256"
+
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release edit "$RELEASE_TAG" --title "$release_title"
+            gh release upload "$RELEASE_TAG" "$dmg_path" "$checksum_path" --clobber
+          else
+            gh release create "$RELEASE_TAG" "$dmg_path" "$checksum_path" \
+              --verify-tag \
+              --generate-notes \
+              --title "$release_title"
+          fi
+
+      - name: Remove temporary signing material
+        if: always()
+        env:
+          SIGNING_KEYCHAIN_PASSWORD: ${{ secrets.MACOS_SIGNING_KEYCHAIN_PASSWORD }}
+        run: |
+          certificate_path="$RUNNER_TEMP/easydict-lite-signing.p12"
+          certificate_pem_path="$RUNNER_TEMP/easydict-lite-signing.pem"
+          keychain_path="$RUNNER_TEMP/easydict-lite-signing.keychain-db"
+
+          if [[ -f "$keychain_path" ]]; then
+            /usr/bin/security delete-keychain "$keychain_path"
+          fi
+          /usr/bin/sudo /usr/bin/security delete-certificate \
+            -c "Local Mac App Code Signing" \
+            /Library/Keychains/System.keychain 2>/dev/null || true
+          if [[ -f "$certificate_path" ]]; then
+            /bin/rm -f "$certificate_path"
+          fi
+          if [[ -f "$certificate_pem_path" ]]; then
+            /bin/rm -f "$certificate_pem_path"
+          fi
