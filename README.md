@@ -31,6 +31,7 @@
 - 划词翻译、静默截图 OCR
 - Apple 翻译及其他词典、翻译、AI、CLI 服务
 - 收藏、禁止名单、高级设置和帮助菜单
+- 窗口类型、窗口配置和翻译服务增删入口
 - HTTP Server、自动更新、分析与崩溃上报
 - Intel (`x86_64`) 构建
 
@@ -72,7 +73,7 @@ scripts/lite/install-local-app.sh
 
 ## 说明
 
-- 当前版本：`2.22.0 (66)`，当前 Lite 标签为 `v2.22.0-lite.2`
+- 当前版本：`2.22.0 (67)`，当前 Lite 标签为 `v2.22.0-lite.3`
 - Bundle ID：`com.anonymxxx.EasydictLite`
 - 本项目继续遵循 [GPL-3.0](./LICENSE)
 - 原项目版权、致谢与贡献归 [Easydict](https://github.com/tisfeng/Easydict) 及其贡献者所有
