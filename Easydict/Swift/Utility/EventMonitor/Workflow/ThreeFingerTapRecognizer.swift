@@ -33,7 +33,7 @@ final class ThreeFingerTapRecognizer {
         let hasCancelledTouch = touches.contains { $0.phase == .cancelled }
 
         if hasCancelledTouch {
-            resetCandidate()
+            rejectContactSequence()
             return .none
         }
 
@@ -46,12 +46,43 @@ final class ThreeFingerTapRecognizer {
     /// Consumes one raw trackpad contact frame.
     func consume(positions: [CGPoint], timestamp: TimeInterval) -> Result {
         if positions.isEmpty {
-            guard startedAt != nil else { return .none }
-            return finishCandidate(at: timestamp)
+            let result = startedAt == nil ? Result.none : finishCandidate(at: timestamp)
+            resetContactSequence()
+            return result
+        }
+
+        if contactSequenceStartedAt == nil {
+            contactSequenceStartedAt = timestamp
+        }
+        guard !isContactSequenceRejected else { return .none }
+
+        if startedAt == nil, positions.count == 2 {
+            let centroid = touchGeometry(positions).centroid
+            if let twoFingerStartCentroid,
+               hypot(centroid.x - twoFingerStartCentroid.x, centroid.y - twoFingerStartCentroid.y)
+               > Constants.maximumTravel
+            {
+                rejectContactSequence()
+                return .none
+            }
+            if twoFingerStartCentroid == nil {
+                twoFingerStartCentroid = centroid
+            }
         }
 
         if startedAt == nil {
-            guard positions.count == Constants.touchCount else { return .none }
+            guard positions.count == Constants.touchCount else {
+                if positions.count > Constants.touchCount {
+                    rejectContactSequence()
+                }
+                return .none
+            }
+            guard let contactSequenceStartedAt,
+                  timestamp - contactSequenceStartedAt <= Constants.maximumTouchOnset
+            else {
+                rejectContactSequence()
+                return .none
+            }
             let geometry = touchGeometry(positions)
             startedAt = timestamp
             startCentroid = geometry.centroid
@@ -63,6 +94,19 @@ final class ThreeFingerTapRecognizer {
 
         if positions.count < Constants.touchCount {
             isEnding = true
+            if positions.count == 2 {
+                let centroid = touchGeometry(positions).centroid
+                if let endingTwoFingerCentroid,
+                   hypot(centroid.x - endingTwoFingerCentroid.x, centroid.y - endingTwoFingerCentroid.y)
+                   > Constants.maximumTravel
+                {
+                    rejectContactSequence()
+                    return .none
+                }
+                if endingTwoFingerCentroid == nil {
+                    endingTwoFingerCentroid = centroid
+                }
+            }
             return .none
         }
 
@@ -70,7 +114,7 @@ final class ThreeFingerTapRecognizer {
               !isEnding,
               let startCentroid
         else {
-            resetCandidate()
+            rejectContactSequence()
             return .none
         }
 
@@ -83,13 +127,14 @@ final class ThreeFingerTapRecognizer {
         maximumTravel = max(maximumTravel, centroidTravel, spreadTravel)
 
         if maximumTravel > Constants.maximumTravel {
-            resetCandidate()
+            rejectContactSequence()
         }
         return .none
     }
 
     func reset() {
         resetCandidate()
+        resetContactSequence()
         lastRecognizedAt = 0
     }
 
@@ -98,12 +143,18 @@ final class ThreeFingerTapRecognizer {
     private enum Constants {
         static let touchCount = 3
         static let maximumDuration: TimeInterval = 0.55
+        /// A third finger added to an ongoing two-finger gesture is not a tap.
+        static let maximumTouchOnset: TimeInterval = 0.15
         /// Touch positions are normalized to the trackpad's 0...1 coordinate space.
         static let maximumTravel: CGFloat = 0.04
         static let debounceInterval: TimeInterval = 0.75
     }
 
     private var startedAt: TimeInterval?
+    private var contactSequenceStartedAt: TimeInterval?
+    private var twoFingerStartCentroid: CGPoint?
+    private var endingTwoFingerCentroid: CGPoint?
+    private var isContactSequenceRejected = false
     private var startCentroid: CGPoint?
     private var startSpread: CGFloat = 0
     private var maximumTravel: CGFloat = 0
@@ -145,5 +196,17 @@ final class ThreeFingerTapRecognizer {
         startSpread = 0
         maximumTravel = 0
         isEnding = false
+        endingTwoFingerCentroid = nil
+    }
+
+    private func rejectContactSequence() {
+        isContactSequenceRejected = true
+        resetCandidate()
+    }
+
+    private func resetContactSequence() {
+        contactSequenceStartedAt = nil
+        twoFingerStartCentroid = nil
+        isContactSequenceRejected = false
     }
 }
